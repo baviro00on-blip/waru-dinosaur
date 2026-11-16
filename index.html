@@ -1,0 +1,2481 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>わるダイナソー - きょうりゅうカードを集めよう！</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@500;700;900&display=swap');
+
+        body {
+            font-family: 'Zen Maru Gothic', sans-serif;
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            color: #fff;
+            user-select: none;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* 3Dボタン風アニメーション */
+        .btn-3d {
+            transition: all 0.1s ease;
+            box-shadow: 0 5px 0 rgba(0,0,0,0.3);
+        }
+        .btn-3d:active {
+            transform: translateY(4px);
+            box-shadow: 0 1px 0 rgba(0,0,0,0.3);
+        }
+
+        /* カードのホログラム・キラ演出（カード枠内に限定） */
+        .card-foil {
+            position: relative;
+            overflow: hidden;
+        }
+        .card-foil::after {
+            content: '';
+            position: absolute;
+            top: -100%;
+            left: -100%;
+            width: 300%;
+            height: 300%;
+            background: linear-gradient(
+                115deg,
+                transparent 25%,
+                rgba(255, 255, 255, 0.6) 45%,
+                rgba(255, 0, 128, 0.4) 50%,
+                rgba(0, 255, 255, 0.4) 55%,
+                transparent 75%
+            );
+            transform: rotate(25deg);
+            pointer-events: none;
+            opacity: 0.7;
+            animation: foilShift 4s infinite linear;
+        }
+
+        @keyframes foilShift {
+            0% { transform: translateY(-30%) rotate(25deg); }
+            100% { transform: translateY(30%) rotate(25deg); }
+        }
+
+        .gold-glow {
+            box-shadow: 0 0 20px rgba(251, 191, 36, 0.9), 0 0 5px rgba(255, 255, 255, 0.8), inset 0 0 12px rgba(251, 191, 36, 0.6);
+        }
+
+        .super-glow {
+            box-shadow: 0 0 25px rgba(236, 72, 153, 0.9), 0 0 10px rgba(56, 189, 248, 0.9), inset 0 0 15px rgba(255, 255, 255, 0.8);
+        }
+
+        /* 震えるアニメーション（間違い時） */
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            20%, 60% { transform: translateX(-8px); }
+            40%, 80% { transform: translateX(8px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s ease-in-out;
+        }
+
+        /* 脈動アニメーション */
+        @keyframes pulse-subtle {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.02); }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s infinite ease-in-out;
+        }
+
+        /* 風で揺れる草むらのアニメーション */
+        @keyframes grassSway {
+            0%, 100% { transform: skewX(0deg); }
+            50% { transform: skewX(-5deg); }
+        }
+        .animate-grass-sway {
+            transform-origin: bottom center;
+            animation: grassSway 2.5s ease-in-out infinite;
+        }
+
+        /* 銃弾飛翔アニメーション */
+        @keyframes flyMissile {
+            0% { transform: translate(0, 0) scale(0.8); opacity: 0; }
+            15% { opacity: 1; }
+            85% { transform: translate(185px, -4px) scale(1.1); opacity: 1; }
+            100% { transform: translate(215px, 0px) scale(1.2); opacity: 0; }
+        }
+        .animate-fly-missile {
+            animation: flyMissile 0.42s linear forwards;
+        }
+
+        /* ドット絵キャラクターの小刻みなバトルアニメーション */
+        @keyframes pixelBounce {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-3px); }
+        }
+        .animate-pixel-bounce {
+            animation: pixelBounce 0.4s steps(2) infinite;
+        }
+
+        @keyframes pixelMonster {
+            0%, 100% { transform: translateY(0px) scaleX(1); }
+            50% { transform: translateY(-3px) scaleX(1.02); }
+        }
+        .animate-pixel-monster {
+            animation: pixelMonster 0.5s steps(2) infinite;
+        }
+
+        /* ドット絵のくっきり描画指定 */
+        .pixelated {
+            image-rendering: pixelated;
+        }
+
+        /* 超豪華レインボーネオンボーダー（全クリア・MUR時） */
+        @keyframes rainbowGlow {
+            0% { box-shadow: 0 0 25px #ef4444, inset 0 0 15px #ef4444; }
+            20% { box-shadow: 0 0 25px #f59e0b, inset 0 0 15px #f59e0b; }
+            40% { box-shadow: 0 0 25px #10b981, inset 0 0 15px #10b981; }
+            60% { box-shadow: 0 0 25px #06b6d4, inset 0 0 15px #06b6d4; }
+            80% { box-shadow: 0 0 25px #8b5cf6, inset 0 0 15px #8b5cf6; }
+            100% { box-shadow: 0 0 25px #ec4899, inset 0 0 15px #ec4899; }
+        }
+        .animate-rainbow-glow {
+            animation: rainbowGlow 2s linear infinite;
+        }
+    </style>
+</head>
+<body class="flex flex-col h-screen text-slate-100 overflow-hidden relative">
+
+    <!-- お祝い用花火・紙吹雪 Canvas -->
+    <canvas id="celebration-canvas" class="pointer-events-none fixed inset-0 z-50 hidden"></canvas>
+
+    <!-- ヘッダーナビゲーション -->
+    <header class="bg-slate-900/90 border-b border-indigo-500/30 px-4 py-2.5 shadow-md shrink-0">
+        <div class="max-w-4xl mx-auto flex justify-between items-center">
+            <div class="flex items-center space-x-2 cursor-pointer" onclick="showStageSelect()">
+                <div class="w-9 h-9 rounded-full bg-gradient-to-tr from-red-500 to-yellow-400 flex items-center justify-center font-black text-xl shadow-md border-2 border-white text-slate-900">
+                    ÷
+                </div>
+                <h1 class="font-black text-lg sm:text-xl tracking-wider text-amber-300 drop-shadow">わるダイナソー</h1>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button onclick="showAlbum()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-1.5 px-3.5 rounded-full border border-indigo-300/40 flex items-center gap-1.5 shadow-md btn-3d text-xs sm:text-sm">
+                    <i data-lucide="book-open" class="w-4 h-4 text-yellow-300"></i>
+                    <span>カードずかん (<span id="card-count">0/20</span>)</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-4xl w-full mx-auto p-3 flex flex-col justify-between overflow-hidden">
+
+        <!-- 1. リーグ・ステージ選択画面 -->
+        <section id="stage-select-screen" class="flex flex-col justify-between h-full py-2 space-y-3">
+            <div class="text-center space-y-1">
+                <h2 id="stage-select-title" class="text-xl sm:text-2xl font-extrabold text-white drop-shadow">「リーグ」と「ステージ」をえらぼう！</h2>
+                <p class="text-indigo-200 text-xs sm:text-sm">クリアするときょうりゅうカードをGETできるよ！</p>
+            </div>
+
+            <!-- 5つのリーグ切り替えタブ -->
+            <div id="world-tabs" class="flex justify-start sm:justify-center gap-1 max-w-2xl mx-auto w-full bg-slate-900/80 p-1.5 rounded-2xl border border-indigo-500/30 overflow-x-auto">
+                <button onclick="switchWorld('normal')" id="tab-normal" class="flex-1 min-w-[78px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all bg-amber-400 text-slate-900 border-2 border-white shadow flex items-center justify-center gap-1 shrink-0">
+                    <span>① ノーマル</span>
+                </button>
+                <button onclick="switchWorld('master')" id="tab-master" class="flex-1 min-w-[78px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all bg-slate-800 text-slate-400 flex items-center justify-center gap-1 shrink-0">
+                    <span>② マスター</span>
+                </button>
+                <button onclick="switchWorld('amari')" id="tab-amari" class="flex-1 min-w-[78px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all bg-slate-800 text-slate-400 flex items-center justify-center gap-1 shrink-0">
+                    <span>③ あまり</span>
+                </button>
+                <button onclick="switchWorld('excite')" id="tab-excite" class="flex-1 min-w-[84px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all bg-slate-800 text-slate-400 flex items-center justify-center gap-1 shrink-0">
+                    <span>④ エキサイト</span>
+                </button>
+                <button onclick="switchWorld('final')" id="tab-final" class="flex-1 min-w-[84px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all bg-slate-800 text-slate-400 flex items-center justify-center gap-1 shrink-0">
+                    <span>⑤ ファイナル</span>
+                </button>
+            </div>
+
+            <!-- 通知用トーストメッセージ -->
+            <div id="toast-message" class="hidden transition-all duration-300 transform -translate-y-2 opacity-0 bg-slate-900/95 border-2 border-amber-400 text-amber-200 text-xs sm:text-sm font-black px-4 py-2 rounded-full shadow-2xl text-center max-w-sm mx-auto">
+                メッセージ
+            </div>
+
+            <div id="stages-grid" class="grid grid-cols-3 gap-3 max-w-xl mx-auto w-full my-auto">
+                <!-- JavaScriptでステージボタンが動的に挿入されます -->
+            </div>
+
+            <div id="stage-footer-tip" class="text-center text-slate-400 text-[11px]">
+                💡 クリアすると次のステージがオープン！残りライフが多いほどレアなカードがもらえるよ！
+            </div>
+        </section>
+
+        <!-- 2. ゲーム画面 -->
+        <section id="game-screen" class="hidden flex flex-col justify-between h-full max-w-md mx-auto w-full py-1">
+            <!-- 進行度・ヘッダー情報 -->
+            <div class="w-full bg-slate-900/80 p-2.5 rounded-2xl border border-indigo-500/30 flex justify-between items-center shadow-lg shrink-0">
+                <div class="flex items-center gap-2">
+                    <span id="current-stage-title" class="text-lg sm:text-xl font-black text-amber-300">÷ 1</span>
+                    <span id="current-round-tag" class="text-[11px] bg-indigo-500/40 text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-400/30">① ノーマルリーグ</span>
+                </div>
+                <!-- ライフ表示 -->
+                <div class="flex items-center space-x-1" id="hearts-container">
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                    <i data-lucide="heart" class="w-6 h-6 text-red-500 fill-red-500"></i>
+                </div>
+            </div>
+
+            <!-- 10問リーグ用 10連四角ゲージ表示エリア -->
+            <div id="master-gauge-container" class="hidden w-full bg-slate-900/80 p-2 rounded-xl border border-purple-500/30 flex items-center justify-between gap-2 shadow-md shrink-0 my-1">
+                <span class="text-[10px] font-black text-amber-300 shrink-0">のこり</span>
+                <div id="master-gauge-boxes" class="flex flex-1 items-center justify-between gap-1">
+                    <!-- JSで10個の四角ゲージを動的生成 -->
+                </div>
+            </div>
+
+            <!-- ドット絵バトルエリア（青空と風に揺れる緑の草原背景） -->
+            <div class="w-full border-2 border-emerald-400/60 rounded-2xl p-2 flex items-center justify-between shrink-0 my-1 relative overflow-hidden h-36 shadow-2xl bg-gradient-to-b from-sky-400 via-sky-200 to-emerald-300">
+                
+                <!-- 雲アニメーション（背景遠景） -->
+                <div class="absolute top-2 left-6 w-12 h-4 bg-white/70 rounded-full blur-[0.5px]"></div>
+                <div class="absolute top-4 right-12 w-16 h-5 bg-white/60 rounded-full blur-[0.5px]"></div>
+
+                <!-- 緑の草原の地面（遠景の丘・地面ベース・風に揺れる草むら） -->
+                <div class="absolute inset-x-0 bottom-0 h-14 pointer-events-none z-0 overflow-hidden">
+                    <!-- 奥のなだらかな緑の丘 -->
+                    <div class="absolute -left-6 bottom-5 w-3/5 h-8 bg-emerald-400/80 rounded-t-full"></div>
+                    <div class="absolute -right-6 bottom-4 w-3/5 h-9 bg-green-500/80 rounded-t-full"></div>
+                    <!-- しっかりとした緑の草原の地面 -->
+                    <div class="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-b from-emerald-500 via-green-600 to-emerald-800 border-t-2 border-lime-300/80"></div>
+                    <!-- 風に揺れる草原の草の穂（奥レイヤー） -->
+                    <div class="absolute -inset-x-4 bottom-8 h-6 flex items-end justify-around animate-grass-sway opacity-90" style="animation-duration: 3.1s;">
+                        <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[14px] border-b-lime-400"></div>
+                        <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[18px] border-b-emerald-400"></div>
+                        <div class="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[15px] border-b-lime-400"></div>
+                        <div class="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[20px] border-b-emerald-400"></div>
+                        <div class="w-0 h-0 border-l-[6px] border-l-transparent border-r-[6px] border-r-transparent border-b-[14px] border-b-lime-400"></div>
+                        <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[17px] border-b-emerald-400"></div>
+                        <div class="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[16px] border-b-lime-400"></div>
+                    </div>
+                    <!-- 風に揺れる草原の草の穂（手前レイヤー） -->
+                    <div class="absolute -inset-x-4 bottom-1 h-9 flex items-end justify-between px-2 animate-grass-sway">
+                        <div class="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[18px] border-b-green-700"></div>
+                        <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[24px] border-b-emerald-700"></div>
+                        <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[20px] border-b-lime-500"></div>
+                        <div class="w-0 h-0 border-l-[11px] border-l-transparent border-r-[11px] border-r-transparent border-b-[26px] border-b-green-700"></div>
+                        <div class="w-0 h-0 border-l-[8px] border-l-transparent border-r-[8px] border-r-transparent border-b-[19px] border-b-emerald-600"></div>
+                        <div class="w-0 h-0 border-l-[10px] border-l-transparent border-r-[10px] border-r-transparent border-b-[23px] border-b-lime-500"></div>
+                        <div class="w-0 h-0 border-l-[9px] border-l-transparent border-r-[9px] border-r-transparent border-b-[21px] border-b-green-700"></div>
+                        <div class="w-0 h-0 border-l-[11px] border-l-transparent border-r-[11px] border-r-transparent border-b-[25px] border-b-emerald-700"></div>
+                        <div class="w-0 h-0 border-l-[7px] border-l-transparent border-r-[7px] border-r-transparent border-b-[18px] border-b-lime-500"></div>
+                    </div>
+                </div>
+
+                <!-- 左：ハンター（銃を構える） -->
+                <div class="relative z-20 flex items-center justify-center pl-2">
+                    <div class="w-16 h-16 animate-pixel-bounce flex items-center justify-center filter drop-shadow-md">
+                        <svg class="w-16 h-16 pixelated" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <!-- サファリハット -->
+                            <rect x="7" y="3" width="12" height="3" fill="#92400e"/>
+                            <rect x="6" y="6" width="14" height="2" fill="#78350f"/>
+                            <rect x="3" y="8" width="20" height="2" fill="#b45309"/>
+                            <!-- 顔・ゴーグル -->
+                            <rect x="7" y="10" width="11" height="6" fill="#fed7aa"/>
+                            <rect x="14" y="11" width="3" height="2" fill="#0f172a"/>
+                            <rect x="15" y="11" width="1" height="1" fill="#38bdf8"/>
+                            <!-- ハンタージャケット -->
+                            <rect x="6" y="16" width="12" height="9" fill="#3f6212"/>
+                            <rect x="9" y="16" width="5" height="9" fill="#a16207"/>
+                            <!-- ライフル銃を構える腕と銃本体 -->
+                            <rect x="5" y="18" width="5" height="4" fill="#78350f"/>
+                            <rect x="10" y="17" width="14" height="3" fill="#334155"/>
+                            <rect x="24" y="17" width="7" height="2" fill="#64748b"/>
+                            <rect x="30" y="17" width="2" height="2" fill="#facc15"/>
+                            <rect x="15" y="15" width="5" height="2" fill="#0284c7"/>
+                            <rect x="11" y="19" width="4" height="3" fill="#fed7aa"/>
+                            <rect x="19" y="19" width="4" height="3" fill="#fed7aa"/>
+                            <!-- ズボン・ブーツ -->
+                            <rect x="7" y="25" width="4" height="4" fill="#365314"/>
+                            <rect x="13" y="25" width="4" height="4" fill="#365314"/>
+                            <rect x="6" y="29" width="5" height="2" fill="#451a03"/>
+                            <rect x="13" y="29" width="5" height="2" fill="#451a03"/>
+                        </svg>
+                    </div>
+
+                    <!-- 銃口のマズルフラッシュ（発射時の閃光） -->
+                    <div id="muzzle-flash" class="hidden absolute left-14 top-5 z-30 pointer-events-none">
+                        <svg class="w-7 h-7 pixelated" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <polygon points="2,8 8,2 7,6 15,8 7,10 8,14" fill="#fef08a"/>
+                            <polygon points="3,8 7,5 12,8 7,11" fill="#f97316"/>
+                        </svg>
+                    </div>
+
+                    <!-- 銃から撃ち出される弾丸 -->
+                    <div id="missile-anim" class="hidden absolute left-14 top-6 z-30 pointer-events-none">
+                        <svg class="w-8 h-6 pixelated drop-shadow-lg" viewBox="0 0 16 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <rect x="0" y="5" width="7" height="2" fill="#fef08a" opacity="0.8"/>
+                            <rect x="5" y="4" width="7" height="4" fill="#f59e0b"/>
+                            <rect x="12" y="4" width="3" height="4" fill="#ef4444"/>
+                            <rect x="15" y="5" width="1" height="2" fill="#ffffff"/>
+                        </svg>
+                    </div>
+                </div>
+
+                <!-- 右：野生の恐竜（ドット絵） -->
+                <div id="wild-pokemon-container" class="relative z-10 flex flex-col items-center justify-center w-36 h-32 pr-2 overflow-visible">
+                    <div id="target-pokemon-scale-box" class="transition-all duration-500 origin-center flex flex-col items-center scale-[2.2]">
+                        <div class="animate-pixel-monster flex flex-col items-center">
+                            <div id="pixel-monster-svg-box" class="w-16 h-16 filter drop-shadow-xl flex items-center justify-center">
+                                <!-- JSで生成されるドット絵 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="hit-explosion" class="hidden absolute z-30 pointer-events-none">
+                        <div class="text-3xl animate-ping">💥</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 問題表示 -->
+            <div class="w-full shrink-0 my-2">
+                <div class="w-full h-32 sm:h-36 rounded-2xl bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 border-4 border-white shadow-xl flex flex-col items-center justify-center p-2 text-slate-900 animate-pulse-subtle">
+                    <div id="question-text" class="text-4xl sm:text-5xl font-black tracking-wider text-slate-900 my-1 text-center">
+                        1 ÷ 1
+                    </div>
+                    <div id="yomi-text" class="text-xs sm:text-sm font-bold text-amber-900 bg-amber-100/90 px-3 py-0.5 rounded-full border border-amber-300">
+                        こたえを えらぼう！
+                    </div>
+                </div>
+            </div>
+
+            <!-- 選択肢 4択 -->
+            <div class="w-full shrink-0 my-2">
+                <div id="options-grid" class="flex justify-center items-center gap-2 sm:gap-4 w-full">
+                    <!-- 動的に生成 -->
+                </div>
+            </div>
+
+            <div id="game-footer-guide" class="text-center text-indigo-300/70 text-[11px] shrink-0">
+                せいかいの 丸いカードを選んでね！
+            </div>
+        </section>
+
+        <!-- 3. クリア演出画面 -->
+        <section id="clear-screen" class="hidden flex flex-col justify-center items-center h-full max-w-md mx-auto w-full py-2 relative z-40">
+            <div id="clear-modal-box" class="bg-slate-900/95 border-2 border-amber-400/60 rounded-3xl p-5 shadow-2xl w-full text-center space-y-4 relative overflow-hidden">
+                <div class="space-y-1">
+                    <div id="clear-badge" class="inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-900 shadow">
+                        GOLD CLEAR!
+                    </div>
+                    <h2 id="clear-title" class="text-2xl font-black text-amber-300 drop-shadow">÷ 1 クリア！</h2>
+                    <p id="clear-subtitle" class="text-indigo-200 text-xs sm:text-sm">きょうりゅうカードを ゲットしたよ！</p>
+                    
+                    <div id="world-clear-banner" class="hidden my-2 py-2 px-3 bg-gradient-to-r from-amber-400 via-rose-500 to-purple-600 text-white font-black text-sm rounded-xl shadow-lg border-2 border-white animate-bounce">
+                        🎉 リーグ クリア！ 🎉
+                    </div>
+                </div>
+
+                <!-- 獲得カードプレビュー -->
+                <div class="flex justify-center py-1">
+                    <div id="reward-card-container" class="transform hover:scale-105 transition-transform duration-300 cursor-pointer">
+                        <!-- カードDOM -->
+                    </div>
+                </div>
+
+                <div class="space-y-2 pt-1">
+                    <button id="next-btn" onclick="handleNextStep()" class="w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white text-lg font-black rounded-xl shadow-lg btn-3d border border-white/20 flex items-center justify-center gap-2">
+                        <span>つぎへ すすむ</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                    <button onclick="startStage(currentStageNumber)" class="w-full py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-white font-black text-base rounded-xl shadow-md btn-3d border border-white/20 flex items-center justify-center gap-2">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                        <span>もう１かいする</span>
+                    </button>
+                    <button onclick="showStageSelect()" class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl shadow-md btn-3d border border-white/20 flex items-center justify-center gap-2 text-sm">
+                        <i data-lucide="home" class="w-4 h-4"></i>
+                        <span>メニューに戻る</span>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. アルバム（カード図鑑）画面 -->
+        <section id="album-screen" class="hidden flex flex-col h-full space-y-2 overflow-hidden">
+            <div class="flex justify-between items-center border-b border-indigo-500/30 pb-2 shrink-0">
+                <div>
+                    <h2 class="text-lg sm:text-xl font-black text-amber-300 flex items-center gap-1.5">
+                        <i data-lucide="award" class="w-6 h-6 text-yellow-400"></i> きょうりゅうカードずかん
+                    </h2>
+                    <p class="text-indigo-200 text-xs">ゲットしたカードをタップして大きくみられるよ！</p>
+                </div>
+                <button onclick="showStageSelect()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs btn-3d">
+                    もどる
+                </button>
+            </div>
+
+            <!-- レア度別フィルターボタンバー (横スクロール対応) -->
+            <div id="album-filter-bar" class="flex gap-1.5 overflow-x-auto pb-1.5 shrink-0 scrollbar-none">
+                <!-- JSで動的生成 -->
+            </div>
+
+            <!-- カードグリッド -->
+            <div id="album-grid" class="flex-1 overflow-y-auto grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 p-1">
+                <!-- 動的に生成 -->
+            </div>
+        </section>
+
+        <!-- 5. カード拡大モーダル -->
+        <div id="card-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex flex-col items-center justify-center p-4" onclick="closeCardModal()">
+            <div class="relative transform scale-125 sm:scale-150 transition-transform duration-300" onclick="event.stopPropagation()">
+                <div id="modal-card-container"></div>
+            </div>
+            <button onclick="closeCardModal()" class="mt-12 bg-white/20 hover:bg-white/30 text-white font-black px-6 py-2 rounded-full border border-white/40 text-sm shadow-xl backdrop-blur-md">
+                とじる
+            </button>
+        </div>
+
+        <!-- ゲームオーバーモーダル -->
+        <div id="gameover-modal" class="hidden fixed inset-0 bg-slate-950/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+            <div class="bg-slate-900 border-2 border-red-500/60 rounded-3xl p-5 max-w-sm w-full text-center space-y-4 shadow-2xl">
+                <div class="w-14 h-14 bg-red-500/20 text-red-400 rounded-full flex items-center justify-center mx-auto border border-red-500/40">
+                    <i data-lucide="heart-off" class="w-8 h-8"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="text-xl font-black text-white">ざんねん！ライフがなくなったよ</h3>
+                    <p class="text-slate-300 text-xs">もういちど 挑戦して クリアを目指そう！</p>
+                </div>
+                <button onclick="retryCurrentStage()" class="w-full py-3 bg-gradient-to-r from-red-500 to-rose-600 hover:from-red-400 hover:to-rose-500 text-white font-black text-base rounded-xl shadow-lg btn-3d">
+                    もう一回する
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- JavaScript ロジック -->
+    <script>
+        // --- 1. 定数とデータ定義 ---
+
+        const SAVE_KEY = 'waru_master_pokemon_save_v1';
+        const NORMAL_STAGE_ORDER = [1, 5, 2, 3, 4, 6, 7, 8, 9];
+        const AMARI_STAGE_ORDER = [5, 2, 3, 4, 6, 7, 8, 9];
+
+        // レア度9段階定義
+        const RARITY_ORDER = ['C', 'U', 'R', 'RR', 'AR', 'SR', 'SAR', 'UR', 'MUR'];
+
+        // 全ての段階でレア度の低いカードの方が出現率が高いウェイト設定
+        const RARITY_WEIGHTS = {
+            'C': 100,
+            'U': 65,
+            'R': 40,
+            'RR': 25,
+            'AR': 15,
+            'SR': 9,
+            'SAR': 5,
+            'UR': 2,
+            'MUR': 1
+        };
+
+        // レアリティの重みに基づいてカードを1枚ランダム抽選するヘルパー関数
+        function pickWeightedCard(cardArray) {
+            if (!cardArray || cardArray.length === 0) return POKEMON_CARDS[0];
+            const weights = cardArray.map(c => RARITY_WEIGHTS[c.rarity] || 10);
+            const totalWeight = weights.reduce((sum, w) => sum + w, 0);
+            let random = Math.random() * totalWeight;
+            for (let i = 0; i < cardArray.length; i++) {
+                if (random < weights[i]) {
+                    return cardArray[i];
+                }
+                random -= weights[i];
+            }
+            return cardArray[0];
+        }
+
+        // 60種類の恐竜カードデータ（アップロードされた5種の恐竜モチーフ：レア度が低いほど小さく地味で、高いほど角・翼・派手な色彩が加わる）
+        const POKEMON_CARDS = [
+            // C (10枚: index 0〜9) - 小さくて装飾も少なく、地味な名前・地味な技
+            { id: 'p1', name: 'ちびイグアノ', species: 'iguanodon', hp: 40, type: '草', typeBg: 'bg-lime-600 text-white', rarity: 'C', attack: 'はっぱかじり', damage: '10', cost: '🍃', bgTone: 'from-stone-900 via-neutral-800 to-stone-950', accentColor: '#78716c', scale: 0.60, skin1: '#a8a29e', skin2: '#78716c', belly: '#d6d3d1', stroke: '#1c1917', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p2', name: 'こがたプテラ', species: 'pteranodon', hp: 40, type: '無', typeBg: 'bg-stone-400 text-slate-900', rarity: 'C', attack: 'ぱたぱた', damage: '10', cost: '⚪', bgTone: 'from-neutral-900 via-stone-800 to-neutral-950', accentColor: '#a8a29e', scale: 0.60, skin1: '#b5a898', skin2: '#8c7f70', belly: '#e7e5e4', stroke: '#1c1917', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p3', name: 'すなアロ', species: 'allosaurus', hp: 50, type: '闘', typeBg: 'bg-amber-800 text-white', rarity: 'C', attack: 'すなかけ', damage: '10', cost: '🥊', bgTone: 'from-amber-950 via-stone-900 to-neutral-950', accentColor: '#92400e', scale: 0.63, skin1: '#a1887f', skin2: '#795548', belly: '#d7ccc8', stroke: '#1c1917', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p4', name: 'こいしステゴ', species: 'stegosaurus', hp: 50, type: '闘', typeBg: 'bg-stone-500 text-white', rarity: 'C', attack: 'からだあたり', damage: '10', cost: '⚪', bgTone: 'from-slate-900 via-stone-900 to-slate-950', accentColor: '#64748b', scale: 0.63, skin1: '#94a3b8', skin2: '#64748b', belly: '#cbd5e1', stroke: '#0f172a', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p5', name: 'チビティラノ', species: 'tyrannosaurus', hp: 50, type: '炎', typeBg: 'bg-amber-700 text-white', rarity: 'C', attack: 'あまがみ', damage: '20', cost: '⚪', bgTone: 'from-stone-900 via-amber-950 to-stone-950', accentColor: '#b45309', scale: 0.63, skin1: '#9ca3af', skin2: '#6b7280', belly: '#d1d5db', stroke: '#111827', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p6', name: 'もりのイグアノ', species: 'iguanodon', hp: 50, type: '草', typeBg: 'bg-emerald-700 text-white', rarity: 'C', attack: 'しっぽふり', damage: '20', cost: '🍃', bgTone: 'from-emerald-950 via-stone-900 to-slate-950', accentColor: '#4d7c0f', scale: 0.66, skin1: '#84a98c', skin2: '#52796f', belly: '#cad2c5', stroke: '#1b262c', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p7', name: 'かぜのプテラ', species: 'pteranodon', hp: 50, type: '無', typeBg: 'bg-slate-400 text-slate-900', rarity: 'C', attack: 'つつく', damage: '20', cost: '⚪', bgTone: 'from-slate-900 via-zinc-800 to-slate-950', accentColor: '#94a3b8', scale: 0.66, skin1: '#cbd5e1', skin2: '#94a3b8', belly: '#f1f5f9', stroke: '#1e293b', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p8', name: 'のらアロ', species: 'allosaurus', hp: 60, type: '闘', typeBg: 'bg-amber-800 text-white', rarity: 'C', attack: 'ひっかく', damage: '20', cost: '🥊', bgTone: 'from-stone-900 via-amber-950 to-slate-950', accentColor: '#78350f', scale: 0.68, skin1: '#8d99ae', skin2: '#5c677d', belly: '#edf2f4', stroke: '#1d1e2c', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p9', name: 'はやしステゴ', species: 'stegosaurus', hp: 60, type: '草', typeBg: 'bg-lime-700 text-white', rarity: 'C', attack: 'せなかガード', damage: '20', cost: '🍃', bgTone: 'from-lime-950 via-stone-900 to-slate-950', accentColor: '#65a30d', scale: 0.68, skin1: '#8a9a5b', skin2: '#556b2f', belly: '#c2c5aa', stroke: '#1a2417', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p10', name: 'わかばティラノ', species: 'tyrannosaurus', hp: 60, type: '草', typeBg: 'bg-emerald-700 text-white', rarity: 'C', attack: 'こづき', damage: '20', cost: '🍃', bgTone: 'from-teal-950 via-stone-900 to-slate-950', accentColor: '#0f766e', scale: 0.70, skin1: '#7f9172', skin2: '#586f4d', belly: '#c9d6be', stroke: '#142112', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+
+            // U (10枚: index 10〜19) -> ここまでで20種類 - 少し育った基本の恐竜たち
+            { id: 'p11', name: 'イグアノドン', species: 'iguanodon', hp: 70, type: '草', typeBg: 'bg-emerald-600 text-white', rarity: 'U', attack: 'おやゆびづき', damage: '30', cost: '🍃⚪', bgTone: 'from-emerald-950 via-teal-950 to-slate-950', accentColor: '#10b981', scale: 0.76, skin1: '#65a30d', skin2: '#3f6212', belly: '#d9f99d', stroke: '#1a2e05', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p12', name: 'プテラノドン', species: 'pteranodon', hp: 70, type: '無', typeBg: 'bg-amber-300 text-slate-900', rarity: 'U', attack: 'かぜおこし', damage: '30', cost: '⚪⚪', bgTone: 'from-amber-950 via-stone-900 to-slate-950', accentColor: '#d97706', scale: 0.76, skin1: '#d97706', skin2: '#92400e', belly: '#fde68a', stroke: '#271300', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p13', name: 'アロサウルス', species: 'allosaurus', hp: 80, type: '闘', typeBg: 'bg-amber-700 text-white', rarity: 'U', attack: 'かみつき', damage: '40', cost: '🥊⚪', bgTone: 'from-orange-950 via-amber-950 to-slate-950', accentColor: '#ea580c', scale: 0.78, skin1: '#c2410c', skin2: '#7c2d12', belly: '#fed7aa', stroke: '#290d02', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p14', name: 'ステゴザウルス', species: 'stegosaurus', hp: 80, type: '闘', typeBg: 'bg-amber-700 text-white', rarity: 'U', attack: 'テールスイング', damage: '30', cost: '🥊⚪', bgTone: 'from-yellow-950 via-amber-950 to-slate-950', accentColor: '#ca8a04', scale: 0.78, skin1: '#4d7c0f', skin2: '#365314', belly: '#bef264', stroke: '#142603', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p15', name: 'ティラノザウルス', species: 'tyrannosaurus', hp: 90, type: '炎', typeBg: 'bg-orange-600 text-white', rarity: 'U', attack: 'とっしん', damage: '40', cost: '🔥⚪', bgTone: 'from-red-950 via-stone-900 to-slate-950', accentColor: '#dc2626', scale: 0.80, skin1: '#b91c1c', skin2: '#7f1d1d', belly: '#fecaca', stroke: '#2b0606', horns: 0, wings: 'none', pattern: 'none', aura: 'none' },
+            { id: 'p16', name: 'いわばイグアノ', species: 'iguanodon', hp: 80, type: '闘', typeBg: 'bg-stone-600 text-white', rarity: 'U', attack: 'いしつぶて', damage: '40', cost: '🥊⚪', bgTone: 'from-stone-900 via-zinc-900 to-slate-950', accentColor: '#71717a', scale: 0.82, skin1: '#78716c', skin2: '#44403c', belly: '#e7e5e4', stroke: '#1c1917', horns: 0, wings: 'none', pattern: 'spots', aura: 'none' },
+            { id: 'p17', name: 'うみべプテラ', species: 'pteranodon', hp: 80, type: '水', typeBg: 'bg-sky-500 text-white', rarity: 'U', attack: 'みずしぶき', damage: '40', cost: '💧⚪', bgTone: 'from-sky-950 via-slate-900 to-slate-950', accentColor: '#0284c7', scale: 0.82, skin1: '#38bdf8', skin2: '#0369a1', belly: '#e0f2fe', stroke: '#082f49', horns: 0, wings: 'none', pattern: 'spots', aura: 'none' },
+            { id: 'p18', name: 'こうやアロ', species: 'allosaurus', hp: 90, type: '闘', typeBg: 'bg-amber-700 text-white', rarity: 'U', attack: 'きあいだめ', damage: '50', cost: '🥊🥊', bgTone: 'from-amber-950 via-orange-950 to-slate-950', accentColor: '#b45309', scale: 0.84, skin1: '#d97706', skin2: '#78350f', belly: '#fef3c7', stroke: '#271202', horns: 0, wings: 'none', pattern: 'spots', aura: 'none' },
+            { id: 'p19', name: 'こけむしステゴ', species: 'stegosaurus', hp: 90, type: '草', typeBg: 'bg-emerald-600 text-white', rarity: 'U', attack: 'つるのむち', damage: '40', cost: '🍃🍃', bgTone: 'from-teal-950 via-emerald-950 to-slate-950', accentColor: '#059669', scale: 0.84, skin1: '#10b981', skin2: '#065f46', belly: '#a7f3d0', stroke: '#022c22', horns: 0, wings: 'none', pattern: 'spots', aura: 'none' },
+            { id: 'p20', name: 'あかっちティラノ', species: 'tyrannosaurus', hp: 100, type: '炎', typeBg: 'bg-red-600 text-white', rarity: 'U', attack: 'ほのおのきば', damage: '50', cost: '🔥⚪', bgTone: 'from-rose-950 via-red-950 to-slate-950', accentColor: '#e11d48', scale: 0.86, skin1: '#dc2626', skin2: '#881337', belly: '#ffe4e6', stroke: '#2a040e', horns: 0, wings: 'none', pattern: 'spots', aura: 'none' },
+
+            // R (10枚: index 20〜29) -> ここまでで30種類 - 鮮やかな体色・模様・小さな角が出現！
+            { id: 'p21', name: 'ツノイグアノドン', species: 'iguanodon', hp: 110, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'R', attack: 'ホーンアタック', damage: '60', cost: '🍃🍃⚪', bgTone: 'from-emerald-950 via-lime-950 to-slate-950', accentColor: '#22c55e', scale: 0.90, skin1: '#22c55e', skin2: '#15803d', belly: '#bbf7d0', stroke: '#052e16', horns: 1, wings: 'none', pattern: 'stripes', aura: 'spark' },
+            { id: 'p22', name: 'スカイプテラノドン', species: 'pteranodon', hp: 100, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'R', attack: 'エアスラッシュ', damage: '60', cost: '💧⚪', bgTone: 'from-cyan-950 via-sky-900 to-slate-950', accentColor: '#0ea5e9', scale: 0.90, skin1: '#0ea5e9', skin2: '#1d4ed8', belly: '#bae6fd', stroke: '#0c192c', horns: 1, wings: 'none', pattern: 'stripes', aura: 'spark' },
+            { id: 'p23', name: 'ブレイブアロサウルス', species: 'allosaurus', hp: 110, type: '闘', typeBg: 'bg-orange-600 text-white', rarity: 'R', attack: 'ダブルクロー', damage: '70', cost: '🥊🥊', bgTone: 'from-orange-950 via-red-950 to-slate-950', accentColor: '#f97316', scale: 0.92, skin1: '#f97316', skin2: '#b91c1c', belly: '#fed7aa', stroke: '#2b0902', horns: 2, wings: 'none', pattern: 'stripes', aura: 'spark' },
+            { id: 'p24', name: 'スパイクステゴザウルス', species: 'stegosaurus', hp: 120, type: '鋼', typeBg: 'bg-slate-500 text-white', rarity: 'R', attack: 'トゲトゲプレス', damage: '70', cost: '⚪⚪⚪', bgTone: 'from-slate-900 via-indigo-950 to-slate-950', accentColor: '#6366f1', scale: 0.92, skin1: '#6366f1', skin2: '#312e81', belly: '#c7d2fe', stroke: '#110f29', horns: 2, wings: 'none', pattern: 'stripes', aura: 'spark' },
+            { id: 'p25', name: 'ファングティラノザウルス', species: 'tyrannosaurus', hp: 130, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'R', attack: 'かえんほうしゃ', damage: '80', cost: '🔥🔥⚪', bgTone: 'from-red-950 via-orange-950 to-slate-950', accentColor: '#ef4444', scale: 0.94, skin1: '#ef4444', skin2: '#991b1b', belly: '#fecaca', stroke: '#2c0505', horns: 2, wings: 'none', pattern: 'stripes', aura: 'spark' },
+            { id: 'p26', name: 'サンダーイグアノ', species: 'iguanodon', hp: 120, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'R', attack: 'エレキホーン', damage: '70', cost: '⚡⚡', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 0.94, skin1: '#facc15', skin2: '#ca8a04', belly: '#fef08a', stroke: '#1f1600', horns: 2, wings: 'none', pattern: 'lightning', aura: 'spark' },
+            { id: 'p27', name: 'フレアプテラノドン', species: 'pteranodon', hp: 110, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'R', attack: 'ヒートダイブ', damage: '80', cost: '🔥🔥', bgTone: 'from-rose-950 via-orange-950 to-slate-950', accentColor: '#f97316', scale: 0.94, skin1: '#f43f5e', skin2: '#ea580c', belly: '#fde047', stroke: '#2c070d', horns: 2, wings: 'none', pattern: 'lightning', aura: 'spark' },
+            { id: 'p28', name: 'ナイトアロサウルス', species: 'allosaurus', hp: 120, type: '超', typeBg: 'bg-purple-600 text-white', rarity: 'R', attack: 'シャドウバイト', damage: '80', cost: '🔮🔮', bgTone: 'from-purple-950 via-indigo-950 to-slate-950', accentColor: '#a855f7', scale: 0.96, skin1: '#9333ea', skin2: '#4c1d95', belly: '#e9d5ff', stroke: '#17062e', horns: 2, wings: 'none', pattern: 'lightning', aura: 'spark' },
+            { id: 'p29', name: 'アイアンステゴザウルス', species: 'stegosaurus', hp: 130, type: '鋼', typeBg: 'bg-slate-400 text-slate-900', rarity: 'R', attack: 'メタルプレート', damage: '80', cost: '⚪⚪⚪', bgTone: 'from-cyan-950 via-slate-900 to-slate-950', accentColor: '#38bdf8', scale: 0.96, skin1: '#94a3b8', skin2: '#0284c7', belly: '#f8fafc', stroke: '#081b29', horns: 3, wings: 'none', pattern: 'crystal', aura: 'spark' },
+            { id: 'p30', name: 'クリムゾンティラノ', species: 'tyrannosaurus', hp: 140, type: '炎', typeBg: 'bg-rose-600 text-white', rarity: 'R', attack: 'マグマファング', damage: '90', cost: '🔥🔥🔥', bgTone: 'from-red-950 via-rose-950 to-slate-950', accentColor: '#f43f5e', scale: 0.98, skin1: '#e11d48', skin2: '#7f1d1d', belly: '#fde047', stroke: '#29030a', horns: 3, wings: 'none', pattern: 'lightning', aura: 'spark' },
+
+            // RR (10枚: index 30〜39) -> ここまでで40種類 - 角が増え、翼が生え始める大型ex恐竜！
+            { id: 'p31', name: 'ギガイグアノドン ex', species: 'iguanodon', hp: 210, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'RR', attack: 'メガホーンインパクト', damage: '130', cost: '🍃🍃⚪', bgTone: 'from-emerald-950 via-teal-900 to-slate-950', accentColor: '#10b981', scale: 1.02, skin1: '#10b981', skin2: '#047857', belly: '#a7f3d0', stroke: '#022c22', horns: 4, wings: 'small', pattern: 'crystal', aura: 'flame' },
+            { id: 'p32', name: 'ストームプテラ ex', species: 'pteranodon', hp: 200, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'RR', attack: 'サンダーハリケーン', damage: '140', cost: '⚡⚡⚪', bgTone: 'from-yellow-950 via-amber-900 to-slate-950', accentColor: '#facc15', scale: 1.02, skin1: '#facc15', skin2: '#0284c7', belly: '#fef9c3', stroke: '#171200', horns: 4, wings: 'dragon', pattern: 'lightning', aura: 'flame' },
+            { id: 'p33', name: 'カイザーアロサウルス ex', species: 'allosaurus', hp: 220, type: '闘', typeBg: 'bg-amber-600 text-white', rarity: 'RR', attack: 'ガイアブレイカー', damage: '150', cost: '🥊🥊⚪', bgTone: 'from-amber-950 via-orange-900 to-slate-950', accentColor: '#f59e0b', scale: 1.04, skin1: '#f59e0b', skin2: '#b91c1c', belly: '#fef3c7', stroke: '#260b01', horns: 4, wings: 'small', pattern: 'stripes', aura: 'flame' },
+            { id: 'p34', name: 'ヘビーステゴザウルス ex', species: 'stegosaurus', hp: 240, type: '鋼', typeBg: 'bg-indigo-500 text-white', rarity: 'RR', attack: 'フォートレスキャノン', damage: '140', cost: '⚪⚪⚪⚪', bgTone: 'from-indigo-950 via-blue-950 to-slate-950', accentColor: '#6366f1', scale: 1.04, skin1: '#38bdf8', skin2: '#3730a3', belly: '#e0f2fe', stroke: '#0b0a26', horns: 5, wings: 'small', pattern: 'crystal', aura: 'flame' },
+            { id: 'p35', name: 'レックスティラノ ex', species: 'tyrannosaurus', hp: 250, type: '炎', typeBg: 'bg-orange-500 text-white', rarity: 'RR', attack: 'バーニングロアー', damage: '160', cost: '🔥🔥🔥', bgTone: 'from-red-950 via-rose-900 to-slate-950', accentColor: '#f97316', scale: 1.06, skin1: '#f97316', skin2: '#be123c', belly: '#fef08a', stroke: '#29030b', horns: 5, wings: 'dragon', pattern: 'lightning', aura: 'flame' },
+            { id: 'p36', name: 'アクアイグアノドン ex', species: 'iguanodon', hp: 220, type: '水', typeBg: 'bg-sky-500 text-white', rarity: 'RR', attack: 'タイダルウェーブ', damage: '140', cost: '💧💧⚪', bgTone: 'from-blue-950 via-cyan-950 to-slate-950', accentColor: '#06b6d4', scale: 1.04, skin1: '#06b6d4', skin2: '#1d4ed8', belly: '#cffafe', stroke: '#06192e', horns: 5, wings: 'angel', pattern: 'crystal', aura: 'flame' },
+            { id: 'p37', name: 'サイコプテラノドン ex', species: 'pteranodon', hp: 210, type: '超', typeBg: 'bg-pink-500 text-white', rarity: 'RR', attack: 'アストラルウィング', damage: '150', cost: '🔮🔮⚪', bgTone: 'from-fuchsia-950 via-purple-950 to-slate-950', accentColor: '#ec4899', scale: 1.04, skin1: '#ec4899', skin2: '#7e22ce', belly: '#fce7f3', stroke: '#26041b', horns: 5, wings: 'angel', pattern: 'crystal', aura: 'flame' },
+            { id: 'p38', name: 'ドラゴンアロサウルス ex', species: 'allosaurus', hp: 230, type: 'ドラゴン', typeBg: 'bg-amber-600 text-white', rarity: 'RR', attack: 'ドラゴンクロー', damage: '160', cost: '🔥🍃⚪', bgTone: 'from-emerald-950 via-amber-950 to-slate-950', accentColor: '#10b981', scale: 1.06, skin1: '#10b981', skin2: '#d97706', belly: '#fef08a', stroke: '#1c1402', horns: 6, wings: 'dragon', pattern: 'lightning', aura: 'flame' },
+            { id: 'p39', name: 'ボルケーノステゴ ex', species: 'stegosaurus', hp: 250, type: '炎', typeBg: 'bg-red-600 text-white', rarity: 'RR', attack: 'マグマ噴火プレス', damage: '160', cost: '🔥🔥⚪', bgTone: 'from-orange-950 via-red-950 to-slate-950', accentColor: '#ef4444', scale: 1.06, skin1: '#ef4444', skin2: '#eab308', belly: '#fef9c3', stroke: '#290505', horns: 6, wings: 'dragon', pattern: 'lightning', aura: 'flame' },
+            { id: 'p40', name: 'サンダーティラノ ex', species: 'tyrannosaurus', hp: 260, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'RR', attack: 'ギガボルトバイト', damage: '180', cost: '⚡⚡⚡', bgTone: 'from-amber-950 via-yellow-900 to-slate-950', accentColor: '#facc15', scale: 1.08, skin1: '#facc15', skin2: '#1e293b', belly: '#fef08a', stroke: '#facc15', horns: 6, wings: 'dragon', pattern: 'lightning', aura: 'flame' },
+
+            // AR (6枚: index 40〜45) - 極彩色の体色・翼・角・光輪オーラを纏うアートレア恐竜！
+            { id: 'p41', name: '虹彩のイグアノドン AR', species: 'iguanodon', hp: 160, type: '草', typeBg: 'bg-emerald-400 text-slate-900', rarity: 'AR', attack: 'プリズムホーン', damage: '120', cost: '🍃💧⚡', bgTone: 'from-teal-950 via-emerald-900 to-indigo-950', accentColor: '#34d399', scale: 1.10, skin1: '#34d399', skin2: '#ec4899', belly: '#fef08a', stroke: '#ffffff', horns: 6, wings: 'angel', pattern: 'crystal', aura: 'halo' },
+            { id: 'p42', name: '天空のプテラノドン AR', species: 'pteranodon', hp: 150, type: '水', typeBg: 'bg-sky-400 text-slate-900', rarity: 'AR', attack: 'オーロラグライド', damage: '110', cost: '💧💧⚪', bgTone: 'from-sky-950 via-indigo-900 to-purple-950', accentColor: '#38bdf8', scale: 1.10, skin1: '#38bdf8', skin2: '#a855f7', belly: '#ffffff', stroke: '#fde047', horns: 6, wings: 'phoenix', pattern: 'crystal', aura: 'halo' },
+            { id: 'p43', name: '星屑のアロサウルス AR', species: 'allosaurus', hp: 170, type: '超', typeBg: 'bg-purple-500 text-white', rarity: 'AR', attack: 'ギャラクシークロー', damage: '130', cost: '🔮🔮⚪', bgTone: 'from-indigo-950 via-purple-900 to-pink-950', accentColor: '#c084fc', scale: 1.12, skin1: '#a855f7', skin2: '#06b6d4', belly: '#fde047', stroke: '#ffffff', horns: 7, wings: 'angel', pattern: 'lightning', aura: 'halo' },
+            { id: 'p44', name: '宝石のステゴザウルス AR', species: 'stegosaurus', hp: 180, type: '鋼', typeBg: 'bg-cyan-400 text-slate-900', rarity: 'AR', attack: 'ジュエルスパイク', damage: '130', cost: '💧⚪⚪', bgTone: 'from-cyan-950 via-fuchsia-950 to-slate-950', accentColor: '#22d3ee', scale: 1.12, skin1: '#f43f5e', skin2: '#06b6d4', belly: '#fef9c3', stroke: '#fde047', horns: 7, wings: 'angel', pattern: 'crystal', aura: 'halo' },
+            { id: 'p45', name: '極彩のティラノザウルス AR', species: 'tyrannosaurus', hp: 190, type: '炎', typeBg: 'bg-rose-500 text-white', rarity: 'AR', attack: 'レインボーファング', damage: '140', cost: '🔥⚡🍃', bgTone: 'from-rose-950 via-amber-900 to-purple-950', accentColor: '#fb7185', scale: 1.14, skin1: '#f43f5e', skin2: '#facc15', belly: '#67e8f9', stroke: '#ffffff', horns: 7, wings: 'phoenix', pattern: 'lightning', aura: 'halo' },
+            { id: 'p46', name: '夢幻の双翼プテラ AR', species: 'pteranodon', hp: 160, type: '超', typeBg: 'bg-pink-400 text-slate-900', rarity: 'AR', attack: 'ファンタジアウィング', damage: '130', cost: '🔮⚡', bgTone: 'from-pink-950 via-rose-900 to-indigo-950', accentColor: '#f472b6', scale: 1.12, skin1: '#f472b6', skin2: '#38bdf8', belly: '#fef08a', stroke: '#ffffff', horns: 7, wings: 'phoenix', pattern: 'crystal', aura: 'halo' },
+
+            // SR (6枚: index 46〜51) - 巨大な翼と無数の黄金・白銀の角を持つ超戦士恐竜！
+            { id: 'p47', name: '聖角帝イグアノドン SR', species: 'iguanodon', hp: 270, type: '草', typeBg: 'bg-emerald-500 text-white', rarity: 'SR', attack: 'エメラルド・ジャッジメント', damage: '190', cost: '🍃🍃⚡', bgTone: 'from-emerald-950 via-teal-900 to-amber-950', accentColor: '#10b981', scale: 1.15, skin1: '#10b981', skin2: '#facc15', belly: '#ffffff', stroke: '#fde047', horns: 8, wings: 'phoenix', pattern: 'crystal', aura: 'halo' },
+            { id: 'p48', name: '神翼王プテラノドン SR', species: 'pteranodon', hp: 260, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'SR', attack: 'ライトニング・テンペスト', damage: '200', cost: '⚡⚡⚡', bgTone: 'from-amber-950 via-yellow-900 to-sky-950', accentColor: '#facc15', scale: 1.15, skin1: '#facc15', skin2: '#ef4444', belly: '#ffffff', stroke: '#38bdf8', horns: 8, wings: 'phoenix', pattern: 'lightning', aura: 'halo' },
+            { id: 'p49', name: '覇竜皇アロサウルス SR', species: 'allosaurus', hp: 280, type: 'ドラゴン', typeBg: 'bg-purple-700 text-white', rarity: 'SR', attack: 'インペリアル・ドラゴン', damage: '210', cost: '🔥🔮⚪', bgTone: 'from-purple-950 via-rose-950 to-amber-950', accentColor: '#a855f7', scale: 1.16, skin1: '#9333ea', skin2: '#f59e0b', belly: '#fef08a', stroke: '#fde047', horns: 8, wings: 'dragon', pattern: 'lightning', aura: 'halo' },
+            { id: 'p50', name: '超装甲ステゴザウルス SR', species: 'stegosaurus', hp: 300, type: '鋼', typeBg: 'bg-sky-500 text-white', rarity: 'SR', attack: 'アルティメット・イージス', damage: '200', cost: '💧⚪⚪⚪', bgTone: 'from-slate-950 via-cyan-900 to-amber-950', accentColor: '#38bdf8', scale: 1.16, skin1: '#06b6d4', skin2: '#facc15', belly: '#ffffff', stroke: '#fde047', horns: 9, wings: 'angel', pattern: 'crystal', aura: 'halo' },
+            { id: 'p51', name: '紅蓮覇王ティラノザウルス SR', species: 'tyrannosaurus', hp: 310, type: '炎', typeBg: 'bg-red-600 text-white', rarity: 'SR', attack: 'ヘルフレイム・エンペラー', damage: '230', cost: '🔥🔥🔥🔥', bgTone: 'from-red-950 via-orange-900 to-yellow-950', accentColor: '#ef4444', scale: 1.18, skin1: '#ef4444', skin2: '#facc15', belly: '#ffffff', stroke: '#fde047', horns: 9, wings: 'phoenix', pattern: 'lightning', aura: 'halo' },
+            { id: 'p52', name: '雷帝翼竜アロサウルス SR', species: 'allosaurus', hp: 290, type: '雷', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'SR', attack: 'プラズマ・カタストロフィ', damage: '220', cost: '⚡⚡🔮', bgTone: 'from-indigo-950 via-yellow-900 to-rose-950', accentColor: '#eab308', scale: 1.16, skin1: '#38bdf8', skin2: '#facc15', belly: '#ffffff', stroke: '#fde047', horns: 9, wings: 'phoenix', pattern: 'lightning', aura: 'halo' },
+
+            // SAR (4枚: index 52〜55) - 神話級の6枚翼＆無数の神角＆虹色オーラ！
+            { id: 'p53', name: '神話創世イグアノドン SAR', species: 'iguanodon', hp: 320, type: '超', typeBg: 'bg-fuchsia-500 text-white', rarity: 'SAR', attack: 'ジェネシス・ホーン', damage: '250', cost: '🍃💧🔥⚡', bgTone: 'from-fuchsia-950 via-emerald-900 to-amber-950', accentColor: '#e879f9', scale: 1.20, skin1: '#10b981', skin2: '#ec4899', belly: '#fde047', stroke: '#ffffff', horns: 10, wings: 'cosmic', pattern: 'crystal', aura: 'rainbow' },
+            { id: 'p54', name: '天翔ける神鳥プテラノドン SAR', species: 'pteranodon', hp: 310, type: 'ドラゴン', typeBg: 'bg-sky-500 text-white', rarity: 'SAR', attack: 'セレスティアル・ノヴァ', damage: '260', cost: '💧⚡🔮⚪', bgTone: 'from-sky-950 via-purple-900 to-amber-950', accentColor: '#38bdf8', scale: 1.20, skin1: '#38bdf8', skin2: '#facc15', belly: '#ffffff', stroke: '#fde047', horns: 10, wings: 'cosmic', pattern: 'lightning', aura: 'rainbow' },
+            { id: 'p55', name: '星砕きの魔竜アロサウルス SAR', species: 'allosaurus', hp: 330, type: 'ドラゴン', typeBg: 'bg-rose-600 text-white', rarity: 'SAR', attack: 'メテオ・アポカリプス', damage: '270', cost: '🔥🔥🔮⚡', bgTone: 'from-rose-950 via-purple-900 to-cyan-950', accentColor: '#f43f5e', scale: 1.21, skin1: '#f43f5e', skin2: '#8b5cf6', belly: '#fef08a', stroke: '#ffffff', horns: 10, wings: 'cosmic', pattern: 'lightning', aura: 'rainbow' },
+            { id: 'p56', name: '不滅の金剛ステゴザウルス SAR', species: 'stegosaurus', hp: 350, type: '鋼', typeBg: 'bg-amber-400 text-slate-900', rarity: 'SAR', attack: 'オリハルコン・スパイク', damage: '260', cost: '⚪⚪⚪⚪', bgTone: 'from-amber-950 via-cyan-900 to-purple-950', accentColor: '#fbbf24', scale: 1.22, skin1: '#facc15', skin2: '#06b6d4', belly: '#ffffff', stroke: '#ffffff', horns: 10, wings: 'cosmic', pattern: 'crystal', aura: 'rainbow' },
+
+            // UR (2枚: index 56〜57) - 黄金＆白銀の究極神恐竜！
+            { id: 'p57', name: '黄金神翼ティラノザウルス UR', species: 'tyrannosaurus', hp: 360, type: 'ドラゴン', typeBg: 'bg-yellow-400 text-slate-900', rarity: 'UR', attack: 'ゴッド・ブレイズ・ロアー', damage: '290', cost: '🔥🔥🔥🔥', bgTone: 'from-amber-950 via-yellow-800 to-red-950', accentColor: '#facc15', scale: 1.24, skin1: '#fde047', skin2: '#f59e0b', belly: '#ffffff', stroke: '#ef4444', horns: 11, wings: 'cosmic', pattern: 'lightning', aura: 'rainbow' },
+            { id: 'p58', name: '白銀聖帝ステゴザウルス UR', species: 'stegosaurus', hp: 370, type: '鋼', typeBg: 'bg-slate-200 text-slate-900', rarity: 'UR', attack: 'プラチナ・コスモ・プレス', damage: '280', cost: '💧⚡🔮⚪', bgTone: 'from-slate-900 via-indigo-900 to-amber-900', accentColor: '#f8fafc', scale: 1.24, skin1: '#f8fafc', skin2: '#38bdf8', belly: '#fde047', stroke: '#facc15', horns: 11, wings: 'cosmic', pattern: 'crystal', aura: 'rainbow' },
+
+            // MUR (2枚: index 58〜59) -> ここまでで60種類 - 超限界突破・無数の角＆巨大神翼＆極彩色オーラの最高峰！
+            { id: 'p59', name: '究極神翔天帝プテラノドン MUR', species: 'pteranodon', hp: 390, type: 'ドラゴン', typeBg: 'bg-gradient-to-r from-pink-400 via-yellow-300 to-cyan-400 text-slate-900', rarity: 'MUR', attack: 'ビッグバン・ウイング・ストーム', damage: '320', cost: '⚡💧🔥🔮', bgTone: 'from-fuchsia-950 via-amber-900 to-cyan-950', accentColor: '#fde047', scale: 1.26, skin1: '#f43f5e', skin2: '#38bdf8', belly: '#fde047', stroke: '#ffffff', horns: 12, wings: 'cosmic', pattern: 'lightning', aura: 'rainbow' },
+            { id: 'p60', name: '創世超覇王ティラノザウルス MUR', species: 'tyrannosaurus', hp: 400, type: 'ドラゴン', typeBg: 'bg-gradient-to-r from-amber-300 via-rose-400 to-purple-400 text-slate-900', rarity: 'MUR', attack: 'オメガ・インフィニティ・ロアー', damage: '350', cost: '🔥🔥🔥🔥', bgTone: 'from-red-950 via-purple-900 to-amber-900', accentColor: '#fde047', scale: 1.28, skin1: '#facc15', skin2: '#ec4899', belly: '#67e8f9', stroke: '#ffffff', horns: 12, wings: 'cosmic', pattern: 'lightning', aura: 'rainbow' }
+        ];
+
+        // --- 2. ゲーム状態管理 ---
+
+        let gameState = {
+            unlockedStages: {
+                normal: [1],
+                master: [1],
+                amari: [5],
+                excite: [1],
+                final: [1]
+            },
+            clearedRanks: {
+                normal: {},
+                master: {},
+                amari: {},
+                excite: {},
+                final: {}
+            },
+            ownedCards: [],
+            newCards: [],
+            lap: 1,
+            currentWorld: 'normal',
+            currentStage: 1,
+            currentQuestionIndex: 0,
+            lives: 4,
+            questions: [],
+            currentMonsterIndex: 0
+        };
+
+        let currentStageNumber = 1;
+        let isProcessingAnswer = false;
+        let currentAlbumFilter = 'ALL';
+        let questionStep = 'quotient'; // 'quotient' (商の選択) | 'remainder' (あまりの選択)
+
+        // 現在の図鑑開放上限 (20 -> 40 -> 60) を取得
+        function getDexCap() {
+            if (gameState.lap === 2) return 40;
+            if (gameState.lap >= 3) return 60;
+            return 20;
+        }
+
+        // 「⑤ファイナル」までの全てのステージがクリアされているか判定
+        function isAllStagesCleared() {
+            const normalDone = NORMAL_STAGE_ORDER.every(st => gameState.clearedRanks.normal && gameState.clearedRanks.normal[st]);
+            const masterDone = !!(gameState.clearedRanks.master && gameState.clearedRanks.master[1]);
+            const amariDone = AMARI_STAGE_ORDER.every(st => gameState.clearedRanks.amari && gameState.clearedRanks.amari[st]);
+            const exciteDone = !!(gameState.clearedRanks.excite && gameState.clearedRanks.excite[1]);
+            const finalDone = !!(gameState.clearedRanks.final && gameState.clearedRanks.final[1]);
+            return normalDone && masterDone && amariDone && exciteDone && finalDone;
+        }
+
+        // 図鑑カウント表示更新: (0/20) -> (20/40) -> (40/60)
+        function updateCardCountDisplay() {
+            const countEl = document.getElementById('card-count');
+            if (!countEl) return;
+
+            const dexCap = getDexCap();
+            const capCards = POKEMON_CARDS.slice(0, dexCap);
+            const ownedInCap = capCards.filter(c => gameState.ownedCards.includes(c.id)).length;
+            countEl.innerText = `${ownedInCap}/${dexCap}`;
+        }
+
+        // 周回（20種コンプ＝2周目、40種コンプ＝3周目）に応じた背景色とタイトル表示の更新
+        function applyLapTheme() {
+            const dexCap = getDexCap();
+            const titleEl = document.getElementById('stage-select-title');
+
+            if (dexCap === 40) {
+                document.body.style.background = 'linear-gradient(135deg, #022c22 0%, #064e3b 50%, #065f46 100%)';
+                if (titleEl) titleEl.innerHTML = '「リーグ」と「ステージ」をえらぼう！<span class="inline-block bg-pink-400 text-black px-2.5 py-0.5 rounded-full ml-1 shadow-md border-2 border-white">【２周目】</span>';
+            } else if (dexCap === 60) {
+                document.body.style.background = 'linear-gradient(135deg, #2d0614 0%, #581126 50%, #7f1d3a 100%)';
+                if (titleEl) titleEl.innerText = '「リーグ」と「ステージ」をえらぼう！【3周目】';
+            } else {
+                document.body.style.background = 'linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%)';
+                if (titleEl) titleEl.innerText = '「リーグ」と「ステージ」をえらぼう！';
+            }
+        }
+
+        // --- セーブ・ロード処理 ---
+        function saveData() {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify({
+                    unlockedStages: gameState.unlockedStages,
+                    clearedRanks: gameState.clearedRanks,
+                    ownedCards: gameState.ownedCards,
+                    newCards: gameState.newCards,
+                    lap: gameState.lap
+                }));
+            } catch (e) {
+                console.error('Save error:', e);
+            }
+            updateCardCountDisplay();
+        }
+
+        function loadSaveData() {
+            try {
+                const saved = localStorage.getItem(SAVE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (parsed.unlockedStages) gameState.unlockedStages = parsed.unlockedStages;
+                    if (parsed.clearedRanks) gameState.clearedRanks = parsed.clearedRanks;
+                    if (parsed.ownedCards) gameState.ownedCards = parsed.ownedCards;
+                    if (parsed.newCards) gameState.newCards = parsed.newCards;
+                    if (typeof parsed.lap === 'number') {
+                        gameState.lap = parsed.lap;
+                    } else {
+                        const first20 = POKEMON_CARDS.slice(0, 20);
+                        const first40 = POKEMON_CARDS.slice(0, 40);
+                        if (first40.every(c => gameState.ownedCards.includes(c.id)) && !isAllStagesCleared()) {
+                            gameState.lap = 3;
+                        } else if (first20.every(c => gameState.ownedCards.includes(c.id)) && !isAllStagesCleared()) {
+                            gameState.lap = 2;
+                        } else {
+                            gameState.lap = 1;
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Load error:', e);
+            }
+
+            if (!gameState.unlockedStages.normal) gameState.unlockedStages.normal = [1];
+            if (!gameState.unlockedStages.master) gameState.unlockedStages.master = [1];
+            if (!gameState.unlockedStages.amari) gameState.unlockedStages.amari = [5];
+            if (!gameState.unlockedStages.excite) gameState.unlockedStages.excite = [1];
+            if (!gameState.unlockedStages.final) gameState.unlockedStages.final = [1];
+
+            if (!gameState.clearedRanks.normal) gameState.clearedRanks.normal = {};
+            if (!gameState.clearedRanks.master) gameState.clearedRanks.master = {};
+            if (!gameState.clearedRanks.amari) gameState.clearedRanks.amari = {};
+            if (!gameState.clearedRanks.excite) gameState.clearedRanks.excite = {};
+            if (!gameState.clearedRanks.final) gameState.clearedRanks.final = {};
+
+            updateCardCountDisplay();
+            applyLapTheme();
+        }
+
+        // --- サウンド＆音声読み上げ（Web Audio API & SpeechSynthesis） ---
+        let audioCtx = null;
+        let bgmInterval = null;
+
+        function getAudioContext() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) audioCtx = new AudioContext();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            return audioCtx;
+        }
+
+        document.addEventListener('pointerdown', () => { getAudioContext(); }, { once: false });
+
+        function playPinpon() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            const osc1 = ctx.createOscillator();
+            const gain1 = ctx.createGain();
+            osc1.type = 'sine';
+            osc1.frequency.setValueAtTime(1046.50, now);
+            gain1.gain.setValueAtTime(0.3, now);
+            gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
+            osc1.connect(gain1);
+            gain1.connect(ctx.destination);
+            osc1.start(now);
+            osc1.stop(now + 0.3);
+
+            const osc2 = ctx.createOscillator();
+            const gain2 = ctx.createGain();
+            osc2.type = 'sine';
+            osc2.frequency.setValueAtTime(1567.98, now + 0.15);
+            gain2.gain.setValueAtTime(0.3, now + 0.15);
+            gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+            osc2.connect(gain2);
+            gain2.connect(ctx.destination);
+            osc2.start(now + 0.15);
+            osc2.stop(now + 0.5);
+        }
+
+        function playBuzzer() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.type = 'sawtooth';
+            osc.frequency.setValueAtTime(150, now);
+            osc.frequency.setValueAtTime(120, now + 0.15);
+            gain.gain.setValueAtTime(0.2, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 0.4);
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.start(now);
+            osc.stop(now + 0.4);
+        }
+
+        function playFanfare(isAllClear = false) {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+
+            const notes = isAllClear 
+                ? [523.25, 659.25, 783.99, 1046.50, 880.00, 1046.50, 1174.66, 1318.51]
+                : [523.25, 659.25, 783.99, 1046.50];
+
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const startTime = now + idx * 0.12;
+                const duration = idx === notes.length - 1 ? 0.8 : 0.15;
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.3, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            });
+        }
+
+        function playCompleteFanfare() {
+            const ctx = getAudioContext();
+            if (!ctx) return;
+            const now = ctx.currentTime;
+            const notes = [523.25, 659.25, 783.99, 1046.50, 1174.66, 1318.51, 1567.98, 1760.00, 2093.00];
+
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const startTime = now + idx * 0.1;
+                const duration = idx === notes.length - 1 ? 1.5 : 0.2;
+
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, startTime);
+                gain.gain.setValueAtTime(0.35, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(startTime);
+                osc.stop(startTime + duration);
+            });
+        }
+
+        function startBGM() {
+            stopBGM();
+            const ctx = getAudioContext();
+            if (!ctx) return;
+
+            const bassNotes = [110, 110, 146.83, 110, 130.81, 110, 123.47, 98];
+            const leadNotes = [440, 523.25, 659.25, 587.33, 523.25, 440, 493.88, 523.25];
+            let noteIdx = 0;
+
+            bgmInterval = setInterval(() => {
+                if (!audioCtx || audioCtx.state !== 'running') return;
+                const now = audioCtx.currentTime;
+
+                const bassOsc = ctx.createOscillator();
+                const bassGain = ctx.createGain();
+                bassOsc.type = 'sawtooth';
+                bassOsc.frequency.setValueAtTime(bassNotes[noteIdx % bassNotes.length], now);
+                bassGain.gain.setValueAtTime(0.08, now);
+                bassGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                bassOsc.connect(bassGain);
+                bassGain.connect(audioCtx.destination);
+                bassOsc.start(now);
+                bassOsc.stop(now + 0.12);
+
+                const leadOsc = ctx.createOscillator();
+                const leadGain = ctx.createGain();
+                leadOsc.type = 'square';
+                leadOsc.frequency.setValueAtTime(leadNotes[noteIdx % leadNotes.length], now);
+                leadGain.gain.setValueAtTime(0.05, now);
+                leadGain.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+                leadOsc.connect(leadGain);
+                leadGain.connect(audioCtx.destination);
+                leadOsc.start(now);
+                leadOsc.stop(now + 0.14);
+
+                noteIdx++;
+            }, 150);
+        }
+
+        function stopBGM() {
+            if (bgmInterval) {
+                clearInterval(bgmInterval);
+                bgmInterval = null;
+            }
+        }
+
+        function speakDivisionQuestion(dividend, divisor) {
+            if (!('speechSynthesis' in window)) return;
+            window.speechSynthesis.cancel();
+
+            const speakText = `${dividend} わる ${divisor} は`;
+            const uttr = new SpeechSynthesisUtterance(speakText);
+            uttr.lang = 'ja-JP';
+            uttr.rate = 1.1;
+            uttr.pitch = 1.2;
+            uttr.volume = 1.0;
+            window.speechSynthesis.speak(uttr);
+        }
+
+        function speakDivisionAnswer(quotient, remainder, askRemainder) {
+            if (!('speechSynthesis' in window)) return;
+
+            let speakText = `${quotient}`;
+            if (askRemainder) {
+                speakText = `${quotient} あまり ${remainder}`;
+            }
+
+            const uttr = new SpeechSynthesisUtterance(speakText);
+            uttr.lang = 'ja-JP';
+            uttr.rate = 1.1;
+            uttr.pitch = 1.2;
+            uttr.volume = 1.0;
+
+            setTimeout(() => {
+                window.speechSynthesis.speak(uttr);
+            }, 150);
+        }
+
+        // --- リーグ開放判定 ---
+        function isWorldUnlocked(world) {
+            if (world === 'normal') return true;
+            if (world === 'master') {
+                return NORMAL_STAGE_ORDER.every(st => gameState.clearedRanks.normal && gameState.clearedRanks.normal[st]);
+            }
+            if (world === 'amari') {
+                return !!(gameState.clearedRanks.master && gameState.clearedRanks.master[1]);
+            }
+            if (world === 'excite') {
+                return AMARI_STAGE_ORDER.every(st => gameState.clearedRanks.amari && gameState.clearedRanks.amari[st]);
+            }
+            if (world === 'final') {
+                return !!(gameState.clearedRanks.excite && gameState.clearedRanks.excite[1]);
+            }
+            return false;
+        }
+
+        function showToast(msg) {
+            const toast = document.getElementById('toast-message');
+            if (!toast) return;
+            toast.innerText = msg;
+            toast.classList.remove('hidden', '-translate-y-2', 'opacity-0');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            setTimeout(() => {
+                toast.classList.add('-translate-y-2', 'opacity-0');
+                setTimeout(() => toast.classList.add('hidden'), 300);
+            }, 2500);
+        }
+
+        function switchWorld(world) {
+            if (!isWorldUnlocked(world)) {
+                if (world === 'master') {
+                    showToast('🔒 「① ノーマル」を全クリアすると開放！');
+                } else if (world === 'amari') {
+                    showToast('🔒 「② マスター」をクリアすると開放！');
+                } else if (world === 'excite') {
+                    showToast('🔒 「③ あまり」を全クリアすると開放！');
+                } else if (world === 'final') {
+                    showToast('🔒 「④ エキサイト」をクリアすると開放！');
+                }
+                playBuzzer();
+                return;
+            }
+
+            gameState.currentWorld = world;
+            renderWorldTabs();
+            renderStages();
+        }
+
+        function renderWorldTabs() {
+            const worlds = [
+                { id: 'normal', name: '① ノーマル' },
+                { id: 'master', name: '② マスター' },
+                { id: 'amari', name: '③ あまり' },
+                { id: 'excite', name: '④ エキサイト' },
+                { id: 'final', name: '⑤ ファイナル' }
+            ];
+
+            worlds.forEach(w => {
+                const btn = document.getElementById(`tab-${w.id}`);
+                if (!btn) return;
+
+                const unlocked = isWorldUnlocked(w.id);
+                const isActive = gameState.currentWorld === w.id;
+
+                if (!unlocked) {
+                    btn.className = "flex-1 min-w-[82px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all bg-slate-900/90 text-slate-500 border border-slate-800 opacity-60 flex items-center justify-center gap-1 cursor-not-allowed shrink-0";
+                    btn.innerHTML = `<i data-lucide="lock" class="w-3 h-3"></i> <span>${w.name}</span>`;
+                } else if (isActive) {
+                    const isSpecial = ['master', 'excite', 'final'].includes(w.id);
+                    const bgClass = isSpecial ? 'bg-gradient-to-r from-purple-500 to-pink-500 text-white' : 'bg-amber-400 text-slate-900';
+                    btn.className = `flex-1 min-w-[82px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all ${bgClass} border-2 border-white shadow flex items-center justify-center gap-1 shrink-0`;
+                    btn.innerHTML = `<span>${w.name}</span>`;
+                } else {
+                    btn.className = "flex-1 min-w-[82px] py-1.5 px-1.5 rounded-xl font-black text-[11px] sm:text-xs transition-all bg-slate-800 text-slate-300 hover:bg-slate-700 flex items-center justify-center gap-1 shrink-0";
+                    btn.innerHTML = `<span>${w.name}</span>`;
+                }
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function renderStages() {
+            renderWorldTabs();
+            const grid = document.getElementById('stages-grid');
+            const tip = document.getElementById('stage-footer-tip');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const world = gameState.currentWorld;
+
+            // 単発10問チャレンジリーグ (マスター・エキサイト・ファイナル)
+            if (world === 'master' || world === 'excite' || world === 'final') {
+                const leagueConfigs = {
+                    master: {
+                        title: 'マスターリーグ 挑戦！',
+                        desc: 'わりきれる わり算 ランダム10問 (ライフ: ❤️4)',
+                        tip: '⚡ マスターリーグ：わりきれる割り算10問出題！0をわる問題も1問でるよ！',
+                        badge: '🥇 マスター覇者',
+                        grad: 'from-purple-600 via-pink-600 to-amber-500'
+                    },
+                    excite: {
+                        title: 'エキサイトリーグ 挑戦！',
+                        desc: 'あまりのある わり算 ランダム10問 (ライフ: ❤️4)',
+                        tip: '🔥 エキサイトリーグ：あまりあり10問出題！商とあまりを順番に選ぼう！',
+                        badge: '🥇 エキサイト覇者',
+                        grad: 'from-rose-600 via-orange-600 to-amber-500'
+                    },
+                    final: {
+                        title: 'ファイナルリーグ 挑戦！',
+                        desc: 'あまりあり・なし 混合 ランダム10問 (ライフ: ❤️4)',
+                        tip: '👑 ファイナルリーグ：わりきれる時は、あまり「0」を選ぼう！',
+                        badge: '👑 ファイナル完全制覇',
+                        grad: 'from-indigo-600 via-purple-600 to-pink-500'
+                    }
+                };
+
+                const cfg = leagueConfigs[world];
+                if (tip) tip.innerText = cfg.tip;
+
+                const cleared = gameState.clearedRanks[world] && gameState.clearedRanks[world][1];
+                const btn = document.createElement('button');
+                btn.className = `col-span-3 p-5 rounded-3xl border-4 flex flex-col items-center justify-center font-black transition-all bg-gradient-to-r ${cfg.grad} text-white border-yellow-300 shadow-2xl btn-3d animate-pulse-subtle`;
+                btn.innerHTML = `
+                    <div class="flex items-center gap-2 text-2xl sm:text-3xl font-black">
+                        <i data-lucide="trophy" class="w-8 h-8 text-yellow-300"></i>
+                        <span>${cfg.title}</span>
+                    </div>
+                    <p class="text-xs text-amber-200 mt-1">${cfg.desc}</p>
+                    ${cleared ? `<span class="mt-2 text-xs bg-amber-400 text-slate-900 px-3 py-1 rounded-full shadow font-bold">${cfg.badge}</span>` : ''}
+                `;
+                btn.onclick = () => startStage(1);
+                grid.appendChild(btn);
+                if (window.lucide) lucide.createIcons();
+                return;
+            }
+
+            // ステージ選択型リーグ (①ノーマル / ③あまり)
+            const stageOrder = (world === 'amari') ? AMARI_STAGE_ORDER : NORMAL_STAGE_ORDER;
+            if (tip) {
+                tip.innerText = (world === 'amari')
+                    ? "💡 商をえらんだあと、ボタンの色が変わったら「あまり」をえらぼう！"
+                    : "💡 クリアすると次のステージがオープン！残りライフが多いほどレアなカードがもらえるよ！";
+            }
+
+            const unlocked = gameState.unlockedStages[world] || [stageOrder[0]];
+            const cleared = gameState.clearedRanks[world] || {};
+
+            stageOrder.forEach((stageNum) => {
+                const isUnlocked = unlocked.includes(stageNum);
+                const rank = cleared[stageNum];
+
+                const btn = document.createElement('button');
+                btn.disabled = !isUnlocked;
+
+                let bgStyle = "bg-slate-800/80 border-slate-700 text-slate-500 opacity-60";
+                let badgeHtml = "";
+
+                if (isUnlocked) {
+                    if (rank === 'gold') {
+                        bgStyle = "bg-gradient-to-br from-amber-300 via-yellow-400 to-amber-500 text-slate-900 border-amber-200 gold-glow btn-3d";
+                        badgeHtml = `<span class="text-xs">🥇 かんぺき</span>`;
+                    } else if (rank === 'silver') {
+                        bgStyle = "bg-gradient-to-br from-slate-300 via-slate-200 to-slate-400 text-slate-900 border-slate-100 btn-3d shadow-lg";
+                        badgeHtml = `<span class="text-xs">🥈 1ミス</span>`;
+                    } else if (rank === 'bronze') {
+                        bgStyle = "bg-gradient-to-br from-amber-700 via-amber-600 to-amber-800 text-amber-100 border-amber-500 btn-3d shadow-lg";
+                        badgeHtml = `<span class="text-xs">🥉 2ミス</span>`;
+                    } else {
+                        bgStyle = "bg-gradient-to-br from-indigo-600 to-blue-700 hover:from-indigo-500 hover:to-blue-600 text-white border-indigo-400 btn-3d shadow-lg";
+                        badgeHtml = `<span class="text-[10px] text-indigo-200">チャレンジ</span>`;
+                    }
+                }
+
+                btn.className = `p-3.5 rounded-2xl border-2 flex flex-col items-center justify-center font-black transition-all ${bgStyle}`;
+                btn.innerHTML = `
+                    <span class="text-2xl sm:text-3xl"><span class="text-lg sm:text-xl">÷</span> ${stageNum}</span>
+                    ${isUnlocked ? badgeHtml : '<i data-lucide="lock" class="w-5 h-5 text-slate-500 mt-1"></i>'}
+                `;
+
+                if (isUnlocked) {
+                    btn.onclick = () => startStage(stageNum);
+                }
+
+                grid.appendChild(btn);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showStageSelect() {
+            stopBGM();
+            hideAllScreens();
+            
+            if (!isWorldUnlocked(gameState.currentWorld)) {
+                gameState.currentWorld = 'normal';
+            }
+
+            applyLapTheme();
+            document.getElementById('stage-select-screen').classList.remove('hidden');
+            renderWorldTabs();
+            renderStages();
+        }
+
+        function hideAllScreens() {
+            ['stage-select-screen', 'game-screen', 'clear-screen', 'album-screen', 'gameover-modal'].forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+        }
+
+        function isSingleChallengeWorld(world) {
+            return ['master', 'excite', 'final'].includes(world);
+        }
+
+        function startStage(stageNum) {
+            currentStageNumber = stageNum;
+            gameState.currentStage = stageNum;
+            gameState.lives = 4;
+            gameState.currentQuestionIndex = 0;
+            gameState.currentMonsterIndex = 0;
+            gameState.questions = generateQuestions(stageNum, gameState.currentWorld);
+
+            hideAllScreens();
+            document.getElementById('game-screen').classList.remove('hidden');
+
+            const worldNameMap = {
+                normal: '① ノーマルリーグ',
+                master: '② マスターリーグ',
+                amari: '③ あまりリーグ',
+                excite: '④ エキサイトリーグ',
+                final: '⑤ ファイナルリーグ'
+            };
+            
+            if (isSingleChallengeWorld(gameState.currentWorld)) {
+                const shortTitleMap = {
+                    master: 'マスターリーグ',
+                    excite: 'エキサイトリーグ',
+                    final: 'ファイナルリーグ'
+                };
+                document.getElementById('current-stage-title').innerText = shortTitleMap[gameState.currentWorld];
+            } else {
+                document.getElementById('current-stage-title').innerText = `÷ ${stageNum}`;
+            }
+            document.getElementById('current-round-tag').innerText = worldNameMap[gameState.currentWorld] || 'リーグ';
+
+            // バトルエリア表示の復元
+            const targetBox = document.getElementById('target-pokemon-scale-box');
+            if (targetBox) {
+                targetBox.classList.remove('opacity-0', 'scale-0');
+            }
+
+            updateHeartsUI();
+            updateMasterGaugeUI();
+            renderMonsterSvg();
+            showQuestion();
+            startBGM();
+        }
+
+        // --- 5リーグ別 問題生成ロジック ---
+        function generateQuestions(stageNum, world) {
+            // ① ノーマルリーグ: 割り切れる割り算、商1〜9がランダムに被りなく9問
+            if (world === 'normal') {
+                const quotients = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                return quotients.map(q => ({
+                    dividend: stageNum * q,
+                    divisor: stageNum,
+                    quotient: q,
+                    remainder: 0,
+                    askRemainder: false
+                }));
+            }
+
+            // ② マスターリーグ: 割る数2〜9・商2〜9の割り切れる割り算から重複なく9問 ＋ 被除数が0の問題を1問 ＝ 計10問
+            if (world === 'master') {
+                const pool = [];
+                for (let d = 2; d <= 9; d++) {
+                    for (let q = 2; q <= 9; q++) {
+                        pool.push({
+                            dividend: d * q,
+                            divisor: d,
+                            quotient: q,
+                            remainder: 0,
+                            askRemainder: false
+                        });
+                    }
+                }
+                pool.sort(() => Math.random() - 0.5);
+                const selected = pool.slice(0, 9);
+
+                // 被除数が0の問題を1問追加
+                const zeroDivisor = Math.floor(Math.random() * 8) + 2; // 2〜9
+                selected.push({
+                    dividend: 0,
+                    divisor: zeroDivisor,
+                    quotient: 0,
+                    remainder: 0,
+                    askRemainder: false
+                });
+
+                return selected.sort(() => Math.random() - 0.5);
+            }
+
+            // ③ あまりリーグ: 余りのある割り算、商1〜9がランダムに被りなく9問
+            if (world === 'amari') {
+                const quotients = [1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+                return quotients.map(q => {
+                    const r = Math.floor(Math.random() * (stageNum - 1)) + 1; // 1 〜 stageNum-1
+                    return {
+                        dividend: stageNum * q + r,
+                        divisor: stageNum,
+                        quotient: q,
+                        remainder: r,
+                        askRemainder: true
+                    };
+                });
+            }
+
+            // ④ エキサイトリーグ: 割る数2〜9・商2〜9の余りあり9問（重複なし）＋ 商が0であまりがある問題1問 ＝ 計10問
+            if (world === 'excite') {
+                const pairPool = [];
+                for (let d = 2; d <= 9; d++) {
+                    for (let q = 2; q <= 9; q++) {
+                        pairPool.push({ d, q });
+                    }
+                }
+                pairPool.sort(() => Math.random() - 0.5);
+                const selectedPairs = pairPool.slice(0, 9);
+
+                const questions = selectedPairs.map(({ d, q }) => {
+                    const r = Math.floor(Math.random() * (d - 1)) + 1;
+                    return {
+                        dividend: d * q + r,
+                        divisor: d,
+                        quotient: q,
+                        remainder: r,
+                        askRemainder: true
+                    };
+                });
+
+                // 商が0であまりがある問題を1問だけ出す (例: 7 ÷ 9 = 0 あまり 7)
+                const zeroQDivisor = Math.floor(Math.random() * 8) + 2; // 2〜9
+                const zeroQRemainder = Math.floor(Math.random() * (zeroQDivisor - 1)) + 1; // 1 〜 d-1
+                questions.push({
+                    dividend: zeroQRemainder,
+                    divisor: zeroQDivisor,
+                    quotient: 0,
+                    remainder: zeroQRemainder,
+                    askRemainder: true
+                });
+
+                return questions.sort(() => Math.random() - 0.5);
+            }
+
+            // ⑤ ファイナルリーグ: あまりあり・あまりなし混在で10問（除数・商は1以外、被除数0なし、商0あまりありも出題可能、全問あまり選択あり）
+            if (world === 'final') {
+                const pool = [];
+                for (let d = 2; d <= 9; d++) {
+                    for (let q = 2; q <= 9; q++) {
+                        pool.push({
+                            dividend: d * q,
+                            divisor: d,
+                            quotient: q,
+                            remainder: 0,
+                            askRemainder: true
+                        });
+                        const r = Math.floor(Math.random() * (d - 1)) + 1;
+                        pool.push({
+                            dividend: d * q + r,
+                            divisor: d,
+                            quotient: q,
+                            remainder: r,
+                            askRemainder: true
+                        });
+                    }
+                }
+
+                const zeroQPool = [];
+                for (let d = 2; d <= 9; d++) {
+                    for (let a = 1; a < d; a++) {
+                        zeroQPool.push({
+                            dividend: a,
+                            divisor: d,
+                            quotient: 0,
+                            remainder: a,
+                            askRemainder: true
+                        });
+                    }
+                }
+                zeroQPool.sort(() => Math.random() - 0.5);
+                pool.push(...zeroQPool.slice(0, 10));
+
+                pool.sort(() => Math.random() - 0.5);
+
+                const uniqueQuestions = [];
+                const seenKeys = new Set();
+                for (const item of pool) {
+                    const key = `${item.dividend}_${item.divisor}`;
+                    if (!seenKeys.has(key)) {
+                        seenKeys.add(key);
+                        uniqueQuestions.push(item);
+                        if (uniqueQuestions.length === 10) break;
+                    }
+                }
+                return uniqueQuestions;
+            }
+
+            return [];
+        }
+
+        function updateHeartsUI() {
+            const container = document.getElementById('hearts-container');
+            if (!container) return;
+            container.innerHTML = '';
+            const totalHearts = 4;
+
+            for (let i = 0; i < totalHearts; i++) {
+                const heart = document.createElement('i');
+                heart.setAttribute('data-lucide', 'heart');
+                if (i < gameState.lives) {
+                    heart.className = "w-6 h-6 text-red-500 fill-red-500";
+                } else {
+                    heart.className = "w-6 h-6 text-slate-600 fill-slate-700 opacity-40";
+                }
+                container.appendChild(heart);
+            }
+            if (window.lucide) lucide.createIcons();
+        }
+
+        // 残りの問題数を表すメーターUI制御（全リーグ共通表示）
+        function updateMasterGaugeUI() {
+            const container = document.getElementById('master-gauge-container');
+            const boxesContainer = document.getElementById('master-gauge-boxes');
+            if (!container || !boxesContainer) return;
+
+            container.classList.remove('hidden');
+            boxesContainer.innerHTML = '';
+
+            const totalQuestions = gameState.questions.length || 9;
+            const remaining = Math.max(0, totalQuestions - gameState.currentQuestionIndex);
+
+            for (let i = 0; i < totalQuestions; i++) {
+                const box = document.createElement('div');
+                if (i < remaining) {
+                    box.className = "flex-1 h-3.5 sm:h-4 rounded-md bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 border border-white shadow-sm transition-all duration-300";
+                } else {
+                    box.className = "flex-1 h-3.5 sm:h-4 rounded-md bg-slate-800/80 border border-slate-700/60 opacity-20 transition-all duration-300";
+                }
+                boxesContainer.appendChild(box);
+            }
+        }
+
+        // バトル画面の野生の恐竜（ドット絵）描画
+        function renderMonsterSvg() {
+            const box = document.getElementById('pixel-monster-svg-box');
+            if (!box) return;
+
+            const totalQ = gameState.questions.length || 9;
+            const progress = gameState.currentQuestionIndex / totalQ;
+            const scaleBox = document.getElementById('target-pokemon-scale-box');
+            if (scaleBox) {
+                const scale = Math.max(0.45, 2.2 - (progress * 1.65));
+                scaleBox.style.transform = `scale(${scale})`;
+            }
+
+            const palettes = [
+                { body: '#16a34a', dark: '#14532d', belly: '#bef264', crest: '#f59e0b' }, // 緑のティラノ
+                { body: '#dc2626', dark: '#7f1d1d', belly: '#fecaca', crest: '#facc15' }, // 赤のアロサウルス
+                { body: '#0284c7', dark: '#0c4a6e', belly: '#bae6fd', crest: '#38bdf8' }, // 青のプテラノドン
+                { body: '#d97706', dark: '#78350f', belly: '#fde68a', crest: '#ef4444' }, // 橙のステゴザウルス
+                { body: '#7c3aed', dark: '#4c1d95', belly: '#ddd6fe', crest: '#f472b6' }  // 紫のイグアノドン
+            ];
+            const seed = isSingleChallengeWorld(gameState.currentWorld)
+                ? (gameState.currentQuestionIndex + gameState.currentWorld.length)
+                : (gameState.currentStage + gameState.currentQuestionIndex);
+            const p = palettes[seed % palettes.length];
+            const dinoType = seed % 5;
+
+            if (dinoType === 2) {
+                // プテラノドン風ドット絵（左向き）
+                box.innerHTML = `
+                    <svg class="w-16 h-16 pixelated drop-shadow-lg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 翼 -->
+                        <rect x="10" y="3" width="6" height="4" fill="${p.dark}"/>
+                        <rect x="12" y="7" width="8" height="6" fill="${p.body}"/>
+                        <rect x="20" y="13" width="10" height="4" fill="${p.body}"/>
+                        <rect x="24" y="17" width="6" height="2" fill="${p.dark}"/>
+                        <!-- 頭部・トサカ・くちばし -->
+                        <rect x="14" y="5" width="7" height="3" fill="${p.crest}"/>
+                        <rect x="8" y="8" width="8" height="6" fill="${p.body}"/>
+                        <rect x="2" y="10" width="6" height="2" fill="${p.crest}"/>
+                        <rect x="3" y="13" width="5" height="2" fill="${p.crest}"/>
+                        <rect x="10" y="9" width="2" height="2" fill="#ffffff"/>
+                        <rect x="10" y="10" width="1" height="1" fill="#000000"/>
+                        <!-- 胴体・脚 -->
+                        <rect x="11" y="14" width="8" height="9" fill="${p.body}"/>
+                        <rect x="11" y="15" width="4" height="7" fill="${p.belly}"/>
+                        <rect x="12" y="23" width="2" height="5" fill="${p.dark}"/>
+                        <rect x="16" y="23" width="2" height="5" fill="${p.dark}"/>
+                    </svg>
+                `;
+            } else if (dinoType === 3) {
+                // ステゴザウルス風ドット絵（左向き・背板付き）
+                box.innerHTML = `
+                    <svg class="w-16 h-16 pixelated drop-shadow-lg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 背板 -->
+                        <rect x="11" y="7" width="3" height="4" fill="${p.crest}"/>
+                        <rect x="15" y="5" width="4" height="6" fill="${p.crest}"/>
+                        <rect x="20" y="7" width="3" height="4" fill="${p.crest}"/>
+                        <!-- 体・尻尾トゲ -->
+                        <rect x="9" y="11" width="16" height="10" fill="${p.body}"/>
+                        <rect x="25" y="13" width="5" height="4" fill="${p.body}"/>
+                        <rect x="28" y="10" width="2" height="3" fill="${p.crest}"/>
+                        <rect x="30" y="12" width="2" height="3" fill="${p.crest}"/>
+                        <!-- 頭 -->
+                        <rect x="3" y="14" width="6" height="5" fill="${p.body}"/>
+                        <rect x="5" y="15" width="2" height="2" fill="#ffffff"/>
+                        <rect x="5" y="16" width="1" height="1" fill="#000000"/>
+                        <!-- 脚 -->
+                        <rect x="10" y="21" width="4" height="7" fill="${p.dark}"/>
+                        <rect x="19" y="21" width="4" height="7" fill="${p.dark}"/>
+                    </svg>
+                `;
+            } else {
+                // ティラノ・アロサウルス・イグアノドン風二足歩行恐竜ドット絵（左向き）
+                box.innerHTML = `
+                    <svg class="w-16 h-16 pixelated drop-shadow-lg" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <!-- 頭部・大きな顎とキバ -->
+                        <rect x="4" y="4" width="12" height="6" fill="${p.body}"/>
+                        <rect x="12" y="2" width="3" height="2" fill="${p.crest}"/>
+                        <rect x="7" y="6" width="3" height="3" fill="#ffffff"/>
+                        <rect x="7" y="7" width="2" height="2" fill="#000000"/>
+                        <rect x="4" y="10" width="2" height="2" fill="#ffffff"/>
+                        <rect x="7" y="10" width="2" height="2" fill="#ffffff"/>
+                        <rect x="5" y="12" width="10" height="3" fill="${p.dark}"/>
+                        <!-- 首・胴体・尻尾 -->
+                        <rect x="10" y="15" width="11" height="10" fill="${p.body}"/>
+                        <rect x="10" y="16" width="5" height="8" fill="${p.belly}"/>
+                        <rect x="21" y="18" width="6" height="5" fill="${p.body}"/>
+                        <rect x="27" y="16" width="4" height="4" fill="${p.dark}"/>
+                        <!-- 小さな前足 -->
+                        <rect x="6" y="17" width="4" height="2" fill="${p.dark}"/>
+                        <rect x="6" y="19" width="2" height="2" fill="#ffffff"/>
+                        <!-- 頑丈な後ろ足 -->
+                        <rect x="13" y="25" width="5" height="5" fill="${p.dark}"/>
+                        <rect x="11" y="28" width="6" height="2" fill="${p.body}"/>
+                    </svg>
+                `;
+            }
+        }
+
+        function showQuestion() {
+            isProcessingAnswer = false;
+            questionStep = 'quotient';
+            const q = gameState.questions[gameState.currentQuestionIndex];
+            if (!q) return;
+
+            const qTextEl = document.getElementById('question-text');
+            const yomiEl = document.getElementById('yomi-text');
+            const guideEl = document.getElementById('game-footer-guide');
+
+            if (q.askRemainder) {
+                qTextEl.className = "text-3xl sm:text-4xl font-black tracking-wider text-slate-900 my-1 text-center";
+                qTextEl.innerText = `${q.dividend} ÷ ${q.divisor} ＝ ？ あまり ？`;
+                yomiEl.className = "text-xs sm:text-sm font-bold text-indigo-950 bg-cyan-200 px-3 py-0.5 rounded-full border border-cyan-400";
+                yomiEl.innerText = '① しょう（答え）を えらぼう！';
+                if (guideEl) guideEl.innerText = 'まずは しょう（答え）の 丸いボタンを選んでね！';
+            } else {
+                qTextEl.className = "text-4xl sm:text-5xl font-black tracking-wider text-slate-900 my-1 text-center";
+                qTextEl.innerText = `${q.dividend} ÷ ${q.divisor}`;
+                yomiEl.className = "text-xs sm:text-sm font-bold text-amber-900 bg-amber-100/90 px-3 py-0.5 rounded-full border border-amber-300";
+                yomiEl.innerText = 'こたえを えらぼう！';
+                if (guideEl) guideEl.innerText = 'せいかいの 丸いカードを選んでね！';
+            }
+
+            speakDivisionQuestion(q.dividend, q.divisor);
+            renderOptions(q, 'quotient');
+        }
+
+        function switchToRemainderStep(q) {
+            questionStep = 'remainder';
+            isProcessingAnswer = false;
+
+            const qTextEl = document.getElementById('question-text');
+            const yomiEl = document.getElementById('yomi-text');
+            const guideEl = document.getElementById('game-footer-guide');
+
+            qTextEl.className = "text-3xl sm:text-4xl font-black tracking-wider text-slate-900 my-1 text-center";
+            qTextEl.innerText = `${q.dividend} ÷ ${q.divisor} ＝ ${q.quotient} あまり ？`;
+
+            yomiEl.className = "text-xs sm:text-sm font-bold text-rose-950 bg-rose-200 px-3 py-0.5 rounded-full border border-rose-400";
+            yomiEl.innerText = '② あまりを えらぼう！';
+            if (guideEl) guideEl.innerText = 'つぎは 「あまり」の 丸いボタンを選んでね！（割り切れるときは 0 ）';
+
+            renderOptions(q, 'remainder');
+        }
+
+        function renderOptions(q, step) {
+            const optionsGrid = document.getElementById('options-grid');
+            optionsGrid.innerHTML = '';
+
+            const shuffled = (step === 'quotient')
+                ? generateQuotientOptions(q)
+                : generateRemainderOptions(q);
+
+            const colorClass = (step === 'quotient')
+                ? 'from-indigo-600 via-blue-500 to-cyan-400'
+                : 'from-amber-500 via-orange-500 to-rose-500';
+
+            shuffled.forEach(ans => {
+                const btn = document.createElement('button');
+                btn.className = `w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-tr ${colorClass} border-4 border-white text-white text-xl sm:text-2xl font-black shadow-xl btn-3d flex items-center justify-center hover:scale-105 transition-transform`;
+                btn.innerText = ans;
+                btn.onclick = () => checkAnswer(ans, btn);
+                optionsGrid.appendChild(btn);
+            });
+        }
+
+        function generateQuotientOptions(q) {
+            const ans = q.quotient;
+            const candidates = new Set();
+
+            [ans - 1, ans + 1, ans - 2, ans + 2, q.divisor, q.remainder].forEach(val => {
+                if (val >= 0 && val <= 9 && val !== ans) {
+                    candidates.add(val);
+                }
+            });
+
+            const pool = [1, 2, 3, 4, 5, 6, 7, 8, 9, 0].sort(() => Math.random() - 0.5);
+            for (const val of pool) {
+                if (candidates.size >= 5) break;
+                if (val !== ans) candidates.add(val);
+            }
+
+            const wrongPool = Array.from(candidates).sort(() => Math.random() - 0.5).slice(0, 3);
+            return [ans, ...wrongPool].sort(() => Math.random() - 0.5);
+        }
+
+        function generateRemainderOptions(q) {
+            const ans = q.remainder;
+            const candidates = new Set();
+
+            [0, q.divisor, q.quotient, ans - 1, ans + 1, ans + 2, q.divisor - 1].forEach(val => {
+                if (val >= 0 && val <= 9 && val !== ans) {
+                    candidates.add(val);
+                }
+            });
+
+            const pool = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9].sort(() => Math.random() - 0.5);
+            for (const val of pool) {
+                if (candidates.size >= 5) break;
+                if (val !== ans) candidates.add(val);
+            }
+
+            const wrongPool = Array.from(candidates).sort(() => Math.random() - 0.5).slice(0, 3);
+            return [ans, ...wrongPool].sort(() => Math.random() - 0.5);
+        }
+
+        function fireHunterGun() {
+            const muzzle = document.getElementById('muzzle-flash');
+            const missile = document.getElementById('missile-anim');
+            if (muzzle) {
+                muzzle.classList.remove('hidden');
+                setTimeout(() => muzzle.classList.add('hidden'), 140);
+            }
+            if (missile) {
+                missile.classList.remove('hidden');
+                missile.classList.add('animate-fly-missile');
+                setTimeout(() => {
+                    missile.classList.add('hidden');
+                    missile.classList.remove('animate-fly-missile');
+
+                    const hit = document.getElementById('hit-explosion');
+                    if (hit) {
+                        hit.classList.remove('hidden');
+                        setTimeout(() => hit.classList.add('hidden'), 350);
+                    }
+                }, 400);
+            }
+        }
+
+        function checkAnswer(selectedAns, btn) {
+            if (isProcessingAnswer) return;
+            const q = gameState.questions[gameState.currentQuestionIndex];
+            if (!q) return;
+
+            const expectedAns = (questionStep === 'quotient') ? q.quotient : q.remainder;
+
+            if (selectedAns === expectedAns) {
+                isProcessingAnswer = true;
+                playPinpon();
+
+                btn.classList.remove('from-indigo-600', 'via-blue-500', 'to-cyan-400', 'from-amber-500', 'via-orange-500', 'to-rose-500');
+                btn.classList.add('from-emerald-400', 'to-teal-500', 'scale-110');
+
+                if (q.askRemainder && questionStep === 'quotient') {
+                    setTimeout(() => {
+                        switchToRemainderStep(q);
+                    }, 350);
+                    return;
+                }
+
+                // 1問完全正解！
+                const hideZeroRemainder = (gameState.currentWorld === 'excite' || gameState.currentWorld === 'final') && q.remainder === 0;
+                if (hideZeroRemainder) {
+                    speakDivisionAnswer(q.quotient, q.remainder, false);
+                    const qTextEl = document.getElementById('question-text');
+                    qTextEl.innerText = `${q.dividend} ÷ ${q.divisor} ＝ ${q.quotient}`;
+                } else {
+                    speakDivisionAnswer(q.quotient, q.remainder, q.askRemainder);
+                    if (q.askRemainder) {
+                        const qTextEl = document.getElementById('question-text');
+                        qTextEl.innerText = `${q.dividend} ÷ ${q.divisor} ＝ ${q.quotient} あまり ${q.remainder}`;
+                    }
+                }
+
+                const isFinalQuestion = (gameState.currentQuestionIndex + 1 >= gameState.questions.length);
+
+                // ハンターが銃を撃つアニメーション
+                fireHunterGun();
+
+                if (!isFinalQuestion) {
+                    setTimeout(() => {
+                        gameState.currentQuestionIndex++;
+                        updateMasterGaugeUI();
+                        renderMonsterSvg();
+                        showQuestion();
+                    }, 1200);
+                } else {
+                    // 最終問題クリア：モンスターボール演出なしでクリア画面へ移行
+                    gameState.currentQuestionIndex++;
+                    updateMasterGaugeUI();
+
+                    setTimeout(() => {
+                        const targetBox = document.getElementById('target-pokemon-scale-box');
+                        if (targetBox) {
+                            targetBox.classList.add('opacity-0', 'scale-0');
+                        }
+                    }, 420);
+
+                    setTimeout(() => {
+                        handleStageClear();
+                    }, 1100);
+                }
+
+            } else {
+                playBuzzer();
+                btn.classList.add('animate-shake', 'from-rose-600', 'to-red-700');
+                setTimeout(() => btn.classList.remove('animate-shake'), 400);
+
+                gameState.lives--;
+                updateHeartsUI();
+
+                if (gameState.lives <= 0) {
+                    stopBGM();
+                    document.getElementById('gameover-modal').classList.remove('hidden');
+                }
+            }
+        }
+
+        function handleStageClear() {
+            stopBGM();
+
+            const world = gameState.currentWorld;
+            const stage = gameState.currentStage;
+
+            let rank = 'bronze';
+            if (gameState.lives === 4) rank = 'gold';
+            else if (gameState.lives === 3) rank = 'silver';
+
+            const isAlreadyCleared = !!(gameState.clearedRanks[world] && gameState.clearedRanks[world][stage]);
+
+            const currentRank = gameState.clearedRanks[world][stage];
+            const rankWeight = { gold: 3, silver: 2, bronze: 1 };
+            if (!currentRank || rankWeight[rank] > (rankWeight[currentRank] || 0)) {
+                gameState.clearedRanks[world][stage] = rank;
+            }
+
+            if (world === 'normal' || world === 'amari') {
+                const order = (world === 'normal') ? NORMAL_STAGE_ORDER : AMARI_STAGE_ORDER;
+                const currentIndex = order.indexOf(stage);
+                if (currentIndex >= 0 && currentIndex < order.length - 1) {
+                    const nextStageNum = order[currentIndex + 1];
+                    if (!gameState.unlockedStages[world].includes(nextStageNum)) {
+                        gameState.unlockedStages[world].push(nextStageNum);
+                    }
+                }
+            }
+
+            const prevLap = gameState.lap;
+            const prevOwnedCount = gameState.ownedCards.length;
+
+            const newCard = getRandomPokemonCard(rank, stage, world, isAlreadyCleared);
+            if (newCard) {
+                if (!gameState.ownedCards.includes(newCard.id)) {
+                    gameState.ownedCards.push(newCard.id);
+                    if (!gameState.newCards.includes(newCard.id)) {
+                        gameState.newCards.push(newCard.id);
+                    }
+                } else {
+                    const idx = gameState.newCards.indexOf(newCard.id);
+                    if (idx !== -1) {
+                        gameState.newCards.splice(idx, 1);
+                    }
+                }
+            }
+
+            const first20Done = POKEMON_CARDS.slice(0, 20).every(c => gameState.ownedCards.includes(c.id));
+            const first40Done = POKEMON_CARDS.slice(0, 40).every(c => gameState.ownedCards.includes(c.id));
+            const allStagesDone = isAllStagesCleared();
+
+            const reachedLap2 = (prevLap === 1 && allStagesDone && first20Done);
+            const reachedLap3 = (prevLap === 2 && allStagesDone && first40Done);
+
+            if (reachedLap2) {
+                gameState.lap = 2;
+            } else if (reachedLap3) {
+                gameState.lap = 3;
+            }
+
+            saveData();
+
+            const currentOwnedCount = gameState.ownedCards.length;
+
+            if (reachedLap2 || reachedLap3) {
+                gameState.unlockedStages = {
+                    normal: [1],
+                    master: [1],
+                    amari: [5],
+                    excite: [1],
+                    final: [1]
+                };
+                gameState.clearedRanks = {
+                    normal: {},
+                    master: {},
+                    amari: {},
+                    excite: {},
+                    final: {}
+                };
+                gameState.currentWorld = 'normal';
+                saveData();
+                applyLapTheme();
+            }
+
+            const clearBadge = document.getElementById('clear-badge');
+            if (rank === 'gold') {
+                clearBadge.innerText = '🥇 PERFECT GOLD!';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-400 text-slate-900 shadow gold-glow';
+            } else if (rank === 'silver') {
+                clearBadge.innerText = '🥈 SILVER CLEAR';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-slate-300 text-slate-900 shadow';
+            } else {
+                clearBadge.innerText = '🥉 BRONZE CLEAR';
+                clearBadge.className = 'inline-block px-4 py-1 rounded-full text-xs font-black bg-amber-700 text-white shadow';
+            }
+
+            const titleMap = {
+                normal: `÷ ${stage} クリア！`,
+                master: 'マスターリーグ クリア！',
+                amari: `÷ ${stage} クリア！`,
+                excite: 'エキサイトリーグ クリア！',
+                final: 'ファイナルリーグ クリア！'
+            };
+            document.getElementById('clear-title').innerText = titleMap[world] || 'クリア！';
+
+            const banner = document.getElementById('world-clear-banner');
+
+            const reached60 = (prevOwnedCount < 60 && currentOwnedCount === 60);
+            const isAlwaysCelebrate = (currentOwnedCount === 60);
+
+            if (reached60) {
+                banner.innerText = '👑 カード図鑑 60種コンプリート達成！！ 👑';
+                banner.classList.remove('hidden');
+                launchCelebration(true, true);
+                playCompleteFanfare();
+            } else if (reachedLap3) {
+                banner.innerText = '✨ 40種コンプリート！全カード（60種）開放！！ ✨';
+                banner.classList.remove('hidden');
+                launchCelebration(false, true);
+                playFanfare(true);
+            } else if (reachedLap2) {
+                banner.innerText = '🎉 20種コンプリート！上限40種にパワーアップ！！ 🎉';
+                banner.classList.remove('hidden');
+                launchCelebration(false, true);
+                playFanfare(true);
+            } else if (isAlwaysCelebrate) {
+                banner.innerText = '👑 図鑑コンプリート中！ 👑';
+                banner.classList.remove('hidden');
+                launchCelebration(false, false);
+                playFanfare(false);
+            } else {
+                banner.classList.add('hidden');
+            }
+
+            const cardBox = document.getElementById('reward-card-container');
+            if (cardBox && newCard) {
+                cardBox.innerHTML = createCardHtml(newCard);
+            }
+
+            hideAllScreens();
+            document.getElementById('clear-screen').classList.remove('hidden');
+        }
+
+        // --- 5リーグ別 ドロップ上限＆確率判定ロジック ---
+        function getRandomPokemonCard(rank, stageNum, world, isAlreadyCleared) {
+            const dexCap = getDexCap();
+
+            let eligibleCards = [];
+            if (dexCap === 20) {
+                eligibleCards = POKEMON_CARDS.slice(0, 20);
+            } else if (dexCap === 40) {
+                eligibleCards = POKEMON_CARDS.slice(20, 40);
+            } else {
+                eligibleCards = POKEMON_CARDS.slice(40, 60);
+            }
+
+            const unownedCards = eligibleCards.filter(c => !gameState.ownedCards.includes(c.id));
+
+            if (unownedCards.length === 1 && world !== 'final') {
+                const ownedInPool = eligibleCards.filter(c => gameState.ownedCards.includes(c.id));
+                if (ownedInPool.length > 0) {
+                    return pickWeightedCard(ownedInPool);
+                }
+            }
+
+            if (world === 'final' && unownedCards.length > 0 && (unownedCards.length === 1 || dexCap === 60)) {
+                return pickWeightedCard(unownedCards);
+            }
+
+            const duplicateChance = isAlreadyCleared ? 0.35 : 0.15;
+            if (unownedCards.length > 0 && Math.random() >= duplicateChance) {
+                return pickWeightedCard(unownedCards);
+            }
+
+            return pickWeightedCard(eligibleCards);
+        }
+
+        function handleNextStep() {
+            const world = gameState.currentWorld;
+            if ((world === 'normal' || world === 'amari') && !gameState.clearedRanks[world][gameState.currentStage]) {
+                showStageSelect();
+                return;
+            }
+            if (isSingleChallengeWorld(world)) {
+                showStageSelect();
+                return;
+            }
+            const order = (world === 'normal') ? NORMAL_STAGE_ORDER : AMARI_STAGE_ORDER;
+            const currentIndex = order.indexOf(gameState.currentStage);
+            if (currentIndex >= 0 && currentIndex < order.length - 1) {
+                const nextStage = order[currentIndex + 1];
+                startStage(nextStage);
+            } else {
+                showStageSelect();
+            }
+        }
+
+        function retryCurrentStage() {
+            startStage(gameState.currentStage);
+        }
+
+        function createCardHtml(card, isModal = false) {
+            const isNew = gameState.newCards.includes(card.id);
+            const scaleClass = isModal ? 'w-56' : 'w-48 h-72';
+
+            const rarityBadgeMap = {
+                'C': '● C', 'U': '◆ U', 'R': '★ R', 'RR': '★★ RR',
+                'AR': '🎨 AR', 'SR': '輝 SR', 'SAR': '✨ SAR', 'UR': '🏆 UR', 'MUR': '👑 MUR'
+            };
+            const rarityBadge = rarityBadgeMap[card.rarity] || card.rarity;
+
+            const isFoilRarity = ['AR', 'SR', 'SAR', 'UR', 'MUR'].includes(card.rarity);
+            let extraEffectClass = isFoilRarity ? 'card-foil' : '';
+            let borderStyle = 'border-amber-300/80';
+
+            if (card.rarity === 'MUR') {
+                extraEffectClass = 'card-foil animate-rainbow-glow';
+                borderStyle = 'border-yellow-200';
+            } else if (card.rarity === 'UR') {
+                extraEffectClass = 'card-foil';
+                borderStyle = 'border-yellow-400 gold-glow';
+            } else if (card.rarity === 'SAR' || card.rarity === 'SR') {
+                extraEffectClass = 'card-foil';
+                borderStyle = 'border-pink-300 super-glow';
+            }
+
+            const nameClass = isModal 
+                ? 'text-xs sm:text-sm tracking-wide text-amber-200 drop-shadow-md leading-tight break-words font-black max-w-[140px]' 
+                : 'text-sm sm:text-base tracking-wide truncate max-w-[110px] drop-shadow-md text-amber-200';
+
+            const attackClass = isModal
+                ? 'text-[11px] sm:text-xs leading-tight break-words'
+                : 'truncate max-w-[95px]';
+
+            const isHighRarity = ['AR', 'SR', 'SAR', 'UR', 'MUR'].includes(card.rarity);
+            const illusBgClass = isHighRarity 
+                ? 'bg-slate-900/75 border-amber-300/80 shadow-md' 
+                : 'bg-white/20 border-white/40 shadow-sm';
+
+            const glowClass = isHighRarity
+                ? 'from-amber-200/40 via-purple-900/20 to-transparent'
+                : 'from-white/50 via-white/15 to-transparent';
+
+            return `
+                <div class="relative ${scaleClass} rounded-2xl p-2.5 bg-gradient-to-b ${card.bgTone} border-4 ${borderStyle} shadow-2xl flex flex-col justify-between ${extraEffectClass} text-white overflow-hidden select-none">
+                    
+                    ${isNew ? `
+                        <div class="absolute top-1 right-1 z-50 bg-gradient-to-r from-red-500 to-pink-500 text-white font-black text-[10px] px-2.5 py-0.5 rounded-full border-2 border-white shadow-xl animate-bounce">
+                            NEW!
+                        </div>
+                    ` : ''}
+
+                    <div class="flex justify-between items-center z-10 font-black border-b border-white/20 pb-1">
+                        <span class="${nameClass}">${card.name}</span>
+                        <span class="text-xs px-2 py-0.5 rounded-full ${card.typeBg} font-bold shadow-sm shrink-0">HP ${card.hp}</span>
+                    </div>
+
+                    <div class="my-1.5 h-28 sm:h-32 rounded-xl ${illusBgClass} border flex items-center justify-center relative overflow-hidden shadow-inner">
+                        <div class="absolute inset-0 opacity-60 bg-[radial-gradient(circle,_var(--tw-gradient-stops))] ${glowClass}"></div>
+                        ${getPokemonSvgIllustration(card)}
+                    </div>
+
+                    <div class="bg-slate-950/70 rounded-xl p-1.5 border border-white/10 z-10 space-y-1">
+                        <div class="flex justify-between items-center text-xs font-bold gap-1">
+                            <span class="text-amber-300 flex items-center gap-1 min-w-0">
+                                <span class="shrink-0">${card.cost}</span>
+                                <span class="${attackClass}">${card.attack}</span>
+                            </span>
+                            <span class="text-sm font-black text-rose-400 shrink-0">${card.damage}</span>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-between items-center z-10 text-[10px] text-amber-200/80 pt-1 font-bold">
+                        <span>${rarityBadge}</span>
+                        <span class="uppercase tracking-widest text-amber-400">${card.rarity}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 5種の恐竜モチーフイラスト生成（レア度に応じて大きさ・角・翼・体色・オーラが段階進化）
+        function getPokemonSvgIllustration(card) {
+            const scale = card.scale || 1.0;
+            const species = card.species || 'tyrannosaurus';
+            const s1 = card.skin1 || '#10b981';
+            const s2 = card.skin2 || '#047857';
+            const belly = card.belly || '#fef08a';
+            const stroke = card.stroke || '#1c1917';
+            const horns = card.horns || 0;
+            const wings = card.wings || 'none';
+            const pattern = card.pattern || 'none';
+            const aura = card.aura || 'none';
+            const uid = card.id || 'd0';
+
+            // 1. 背景オーラレイヤー
+            let auraSvg = '';
+            if (aura === 'spark') {
+                auraSvg = `
+                    <circle cx="50" cy="50" r="36" fill="none" stroke="${s1}" stroke-width="1.5" stroke-dasharray="4 6" opacity="0.6"/>
+                `;
+            } else if (aura === 'flame') {
+                auraSvg = `
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="${s2}" stroke-width="2.5" stroke-dasharray="8 4" opacity="0.75"/>
+                    <polygon points="50,4 54,14 46,14" fill="#facc15" opacity="0.8"/>
+                    <polygon points="12,26 20,30 16,36" fill="#f97316" opacity="0.8"/>
+                    <polygon points="88,26 80,30 84,36" fill="#f97316" opacity="0.8"/>
+                `;
+            } else if (aura === 'halo') {
+                auraSvg = `
+                    <circle cx="50" cy="50" r="42" fill="none" stroke="#fde047" stroke-width="2.5" opacity="0.85"/>
+                    <circle cx="50" cy="50" r="35" fill="none" stroke="${s1}" stroke-width="1.5" stroke-dasharray="5 3" opacity="0.8"/>
+                    <polygon points="50,2 53,10 61,10 55,15 57,23 50,18 43,23 45,15 39,10 47,10" fill="#fef08a" opacity="0.85"/>
+                `;
+            } else if (aura === 'rainbow') {
+                auraSvg = `
+                    <circle cx="50" cy="50" r="45" fill="none" stroke="url(#grad_rain_${uid})" stroke-width="4" opacity="0.95"/>
+                    <circle cx="50" cy="50" r="38" fill="none" stroke="#ffffff" stroke-width="1.5" stroke-dasharray="3 3" opacity="0.9"/>
+                    <polygon points="50,1 54,12 65,12 56,19 59,30 50,23 41,30 44,19 35,12 46,12" fill="#fde047"/>
+                    <circle cx="15" cy="18" r="2.5" fill="#38bdf8"/>
+                    <circle cx="85" cy="18" r="2.5" fill="#f43f5e"/>
+                    <circle cx="14" cy="82" r="2.5" fill="#a855f7"/>
+                    <circle cx="86" cy="82" r="2.5" fill="#10b981"/>
+                `;
+            }
+
+            // 2. 背面翼レイヤー（レア度が高いほど大きく豪華な翼が生える）
+            let wingSvg = '';
+            if (wings === 'small') {
+                wingSvg = `
+                    <path d="M46,42 Q32,20 20,30 Q30,36 42,46 Z" fill="${s2}" stroke="${stroke}" stroke-width="2"/>
+                    <path d="M52,40 Q42,16 32,24 Q40,32 48,44 Z" fill="${belly}" stroke="${stroke}" stroke-width="1.5"/>
+                `;
+            } else if (wings === 'dragon') {
+                wingSvg = `
+                    <path d="M48,42 Q26,8 8,22 Q18,28 14,38 Q26,34 32,44 Q38,38 45,48 Z" fill="${s2}" stroke="${stroke}" stroke-width="2.2"/>
+                    <path d="M54,40 Q38,4 22,14 Q30,22 28,32 Q38,30 48,44 Z" fill="${s1}" stroke="${stroke}" stroke-width="2"/>
+                    <polygon points="8,22 4,16 12,20" fill="#fde047"/>
+                    <polygon points="22,14 19,8 26,12" fill="#fde047"/>
+                `;
+            } else if (wings === 'angel') {
+                wingSvg = `
+                    <path d="M48,42 C28,10 10,14 6,28 C14,28 10,36 16,40 C22,38 22,46 30,46 C36,44 40,50 46,48 Z" fill="#ffffff" stroke="${s1}" stroke-width="2"/>
+                    <path d="M54,40 C38,6 22,8 18,20 C26,22 24,30 32,34 C38,34 42,42 50,44 Z" fill="${belly}" stroke="${s2}" stroke-width="1.8"/>
+                `;
+            } else if (wings === 'phoenix') {
+                wingSvg = `
+                    <path d="M50,44 C26,4 4,10 2,28 C12,24 6,36 12,44 C20,38 18,48 26,52 C34,46 38,54 48,50 Z" fill="url(#grad_wing_${uid})" stroke="${stroke}" stroke-width="2.2"/>
+                    <path d="M56,42 C40,2 20,4 14,18 C24,18 20,28 28,34 C36,32 42,42 52,46 Z" fill="#fde047" stroke="${s2}" stroke-width="1.8"/>
+                `;
+            } else if (wings === 'cosmic') {
+                wingSvg = `
+                    <path d="M50,46 C22,2 2,8 1,28 C12,22 4,36 10,46 C18,40 16,52 26,56 C34,48 40,56 48,52 Z" fill="url(#grad_rain_${uid})" stroke="#ffffff" stroke-width="2.2"/>
+                    <path d="M54,42 C36,0 16,2 10,18 C20,16 16,28 24,36 C34,32 42,44 52,46 Z" fill="#fde047" stroke="${stroke}" stroke-width="2"/>
+                    <path d="M46,52 C24,56 10,66 14,76 C22,70 28,74 36,68 C40,64 44,60 48,56 Z" fill="${s2}" stroke="#ffffff" stroke-width="1.8"/>
+                `;
+            }
+
+            // 3. 5種類の恐竜本体シルエット（アップロードされた手描きイラストの特徴を忠実に再現）
+            let bodySvg = '';
+            let hornCoords = [];
+
+            if (species === 'iguanodon') {
+                // イグアノドン.jpg：前傾の丸い背中、大きな目、歯のある開口、特徴的な親指スパイクと脚・尻尾
+                bodySvg = `
+                    <!-- 尻尾と後ろ足 -->
+                    <path d="M36,52 Q20,62 12,78 Q22,74 30,62 L34,82 Q42,80 44,64 L54,82 Q62,78 58,58 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.6" stroke-linejoin="round"/>
+                    <!-- 胴体と前傾の頭部 -->
+                    <path d="M34,54 Q36,32 62,28 Q84,26 86,34 Q86,38 74,40 L88,46 Q88,52 60,54 L52,60 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.8" stroke-linejoin="round"/>
+                    <!-- 親指スパイク（特徴的な前脚のトゲ） -->
+                    <path d="M56,52 L68,74 Q72,72 64,52 Z" fill="${belly}" stroke="${stroke}" stroke-width="2.2"/>
+                    <!-- 口の中のキバ -->
+                    <polygon points="75,40 78,44 81,41" fill="#ffffff" stroke="${stroke}" stroke-width="1"/>
+                    <polygon points="72,47 75,43 78,47" fill="#ffffff" stroke="${stroke}" stroke-width="1"/>
+                    <!-- 鋭い目 -->
+                    <ellipse cx="70" cy="33" rx="5" ry="3.5" fill="#ffffff" stroke="${stroke}" stroke-width="2"/>
+                    <circle cx="71" cy="33" r="1.8" fill="#000000"/>
+                `;
+                hornCoords = [
+                    { x: 84, y: 29, dx: 8, dy: -8 },
+                    { x: 75, y: 27, dx: 4, dy: -11 },
+                    { x: 65, y: 28, dx: -1, dy: -12 },
+                    { x: 55, y: 30, dx: -4, dy: -12 },
+                    { x: 46, y: 34, dx: -7, dy: -11 },
+                    { x: 39, y: 40, dx: -9, dy: -9 },
+                    { x: 33, y: 48, dx: -11, dy: -6 },
+                    { x: 25, y: 56, dx: -11, dy: -4 },
+                    { x: 18, y: 65, dx: -10, dy: -2 },
+                    { x: 79, y: 35, dx: 9, dy: -4 },
+                    { x: 68, y: 66, dx: 8, dy: 6 },
+                    { x: 58, y: 74, dx: 7, dy: 6 }
+                ];
+            } else if (species === 'pteranodon') {
+                // プテラノ.jpg：頭頂部の尖ったトサカ、大きく開いたくちばし、大きな目、左右に広げた翼、2本脚
+                bodySvg = `
+                    <!-- 広げた左右の翼 -->
+                    <path d="M44,52 L10,68 L42,62 L44,86 L50,74 L56,86 L58,62 L90,46 L56,50 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.6" stroke-linejoin="round"/>
+                    <!-- 胸部お腹 -->
+                    <ellipse cx="50" cy="58" rx="7" ry="11" fill="${belly}" opacity="0.85"/>
+                    <!-- 首・頭部・トサカ・くちばし -->
+                    <path d="M43,52 L40,30 L43,16 L50,24 L76,22 L62,32 L78,34 L56,42 L56,52 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.6" stroke-linejoin="round"/>
+                    <!-- くちばしの先端ライン -->
+                    <line x1="65" y1="22" x2="66" y2="28" stroke="${stroke}" stroke-width="2"/>
+                    <line x1="65" y1="34" x2="66" y2="39" stroke="${stroke}" stroke-width="2"/>
+                    <!-- 大きな目 -->
+                    <ellipse cx="51" cy="30" rx="6" ry="4.5" fill="#ffffff" stroke="${stroke}" stroke-width="2"/>
+                    <circle cx="52" cy="30" r="2.2" fill="#000000"/>
+                `;
+                hornCoords = [
+                    { x: 43, y: 17, dx: -4, dy: -12 },
+                    { x: 48, y: 22, dx: 2, dy: -12 },
+                    { x: 74, y: 22, dx: 9, dy: -7 },
+                    { x: 40, y: 26, dx: -10, dy: -6 },
+                    { x: 40, y: 35, dx: -11, dy: -2 },
+                    { x: 88, y: 46, dx: 9, dy: -6 },
+                    { x: 12, y: 67, dx: -9, dy: -5 },
+                    { x: 56, y: 22, dx: 4, dy: -11 },
+                    { x: 64, y: 22, dx: 6, dy: -10 },
+                    { x: 44, y: 84, dx: -6, dy: 7 },
+                    { x: 56, y: 84, dx: 6, dy: 7 },
+                    { x: 50, y: 46, dx: 0, dy: -11 }
+                ];
+            } else if (species === 'stegosaurus') {
+                // ステゴ.jpg：左向きの尖ったくちばし顔、背中に並ぶ山型の背板、4本のしっかりした脚
+                bodySvg = `
+                    <!-- 背中の5枚の背板（左から右へ大きくなる） -->
+                    <path d="M38,44 Q39,34 44,41 Q47,29 53,38 Q58,23 66,35 Q72,19 80,32 Q86,18 92,32 L88,42 Z" fill="${belly}" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>
+                    <!-- 4本の脚 -->
+                    <path d="M46,56 L36,74 L48,72 L46,80 L58,74 L56,84 L68,72 L70,84 L82,68 L78,54 Z" fill="${s2}" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>
+                    <!-- 胴体と左向きの尖った頭部 -->
+                    <path d="M12,62 Q18,46 38,44 L88,32 Q94,38 86,48 L42,56 Q28,64 12,62 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.8" stroke-linejoin="round"/>
+                    <!-- くちばしライン -->
+                    <line x1="17" y1="53" x2="23" y2="62" stroke="${stroke}" stroke-width="2.2"/>
+                    <!-- 目 -->
+                    <circle cx="31" cy="48" r="3.5" fill="#ffffff" stroke="${stroke}" stroke-width="2"/>
+                    <circle cx="30" cy="48" r="1.6" fill="#000000"/>
+                `;
+                hornCoords = [
+                    { x: 14, y: 58, dx: -10, dy: -4 },
+                    { x: 24, y: 49, dx: -7, dy: -10 },
+                    { x: 40, y: 37, dx: -3, dy: -11 },
+                    { x: 50, y: 32, dx: -2, dy: -12 },
+                    { x: 61, y: 26, dx: 0, dy: -12 },
+                    { x: 75, y: 22, dx: 2, dy: -12 },
+                    { x: 88, y: 22, dx: 6, dy: -11 },
+                    { x: 91, y: 35, dx: 9, dy: -5 },
+                    { x: 89, y: 43, dx: 9, dy: 2 },
+                    { x: 34, y: 44, dx: -5, dy: -11 },
+                    { x: 44, y: 56, dx: -7, dy: 7 },
+                    { x: 76, y: 55, dx: 7, dy: 7 }
+                ];
+            } else if (species === 'allosaurus') {
+                // アロサウルス（ブラキオ.jpgの長い首と鳥のような鋭い頭・4本脚・尻尾をベースに凶暴化）
+                bodySvg = `
+                    <!-- 長い首・胴体・脚・尻尾 -->
+                    <path d="M12,34 Q14,22 28,22 Q36,22 36,36 L38,66 L64,62 Q74,56 80,60 L92,56 Q94,64 80,68 L78,82 Q72,84 68,72 L44,74 L40,86 Q34,86 32,74 L26,72 L24,36 L12,34 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.6" stroke-linejoin="round"/>
+                    <!-- お腹のライン -->
+                    <path d="M38,68 Q56,64 70,66" stroke="${belly}" stroke-width="3" fill="none" stroke-linecap="round"/>
+                    <!-- 鋭い目 -->
+                    <ellipse cx="22" cy="26" rx="4.5" ry="2.8" fill="#ffffff" stroke="${stroke}" stroke-width="1.8"/>
+                    <circle cx="21" cy="26" r="1.5" fill="#000000"/>
+                `;
+                hornCoords = [
+                    { x: 26, y: 22, dx: 2, dy: -12 },
+                    { x: 18, y: 24, dx: -5, dy: -11 },
+                    { x: 13, y: 31, dx: -10, dy: -4 },
+                    { x: 36, y: 32, dx: 10, dy: -4 },
+                    { x: 37, y: 42, dx: 11, dy: -2 },
+                    { x: 37, y: 52, dx: 11, dy: 0 },
+                    { x: 48, y: 64, dx: 2, dy: -11 },
+                    { x: 60, y: 62, dx: 3, dy: -11 },
+                    { x: 72, y: 59, dx: 5, dy: -10 },
+                    { x: 91, y: 57, dx: 8, dy: -6 },
+                    { x: 24, y: 46, dx: -10, dy: 0 },
+                    { x: 24, y: 58, dx: -10, dy: 2 }
+                ];
+            } else {
+                // ティラノ.jpg：大きく開いた牙だらけの顎、小さな前足、太い後ろ足とカギ爪、長くうねる尻尾
+                bodySvg = `
+                    <!-- 尻尾・胴体・大きく開いた顎 -->
+                    <path d="M6,32 Q24,30 34,48 L66,24 Q82,16 88,22 L72,30 L88,36 Q84,46 68,40 L54,60 L34,58 Q20,56 6,32 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.6" stroke-linejoin="round"/>
+                    <!-- お腹の模様 -->
+                    <path d="M52,58 Q62,48 68,40" stroke="${belly}" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+                    <!-- 上顎と下顎のギザギザの歯 -->
+                    <path d="M71,29 L74,32 L77,28 L80,31 L83,27 L86,30" stroke="#ffffff" stroke-width="1.8" fill="none"/>
+                    <path d="M71,37 L74,34 L77,38 L80,34 L83,38 L86,35" stroke="#ffffff" stroke-width="1.8" fill="none"/>
+                    <!-- 小さな前足と爪 -->
+                    <path d="M56,48 L56,55 L61,58 M66,52 L67,58 L72,60" stroke="${stroke}" stroke-width="2.2" fill="none" stroke-linecap="round"/>
+                    <!-- 太い後ろ足と3本の爪 -->
+                    <path d="M40,56 L38,70 L46,74 L42,84 L50,84 L54,74 L48,66 L48,58 Z" fill="${s2}" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>
+                    <path d="M54,60 L54,72 L60,76 L56,86 L66,84 L62,74 L60,60 Z" fill="url(#grad_body_${uid})" stroke="${stroke}" stroke-width="2.4" stroke-linejoin="round"/>
+                    <!-- 鋭い目 -->
+                    <circle cx="71" cy="23" r="3.2" fill="#ffffff" stroke="${stroke}" stroke-width="1.8"/>
+                    <circle cx="72" cy="23" r="1.5" fill="#000000"/>
+                `;
+                hornCoords = [
+                    { x: 70, y: 20, dx: -1, dy: -12 },
+                    { x: 80, y: 18, dx: 5, dy: -11 },
+                    { x: 60, y: 28, dx: -5, dy: -11 },
+                    { x: 52, y: 34, dx: -6, dy: -10 },
+                    { x: 44, y: 40, dx: -7, dy: -10 },
+                    { x: 36, y: 46, dx: -8, dy: -9 },
+                    { x: 26, y: 42, dx: -6, dy: -10 },
+                    { x: 16, y: 36, dx: -4, dy: -11 },
+                    { x: 8, y: 32, dx: -7, dy: -8 },
+                    { x: 85, y: 41, dx: 7, dy: 7 },
+                    { x: 46, y: 74, dx: -8, dy: 4 },
+                    { x: 62, y: 76, dx: 8, dy: 4 }
+                ];
+            }
+
+            // 4. 体表模様レイヤー（高レア度で浮き出る模様）
+            let patternSvg = '';
+            if (pattern === 'spots') {
+                patternSvg = `
+                    <circle cx="48" cy="48" r="2.2" fill="${belly}" opacity="0.75"/>
+                    <circle cx="56" cy="44" r="1.8" fill="${belly}" opacity="0.75"/>
+                    <circle cx="42" cy="54" r="2" fill="${belly}" opacity="0.75"/>
+                `;
+            } else if (pattern === 'stripes') {
+                patternSvg = `
+                    <path d="M44,44 L50,48 M48,50 L54,54 M52,40 L58,44" stroke="${belly}" stroke-width="2.4" stroke-linecap="round" opacity="0.85"/>
+                `;
+            } else if (pattern === 'lightning') {
+                patternSvg = `
+                    <polyline points="44,42 50,46 46,50 54,55" fill="none" stroke="#fef08a" stroke-width="2.2" stroke-linecap="round"/>
+                `;
+            } else if (pattern === 'crystal') {
+                patternSvg = `
+                    <polygon points="50,42 54,48 50,54 46,48" fill="#ffffff" stroke="${s2}" stroke-width="1.2" opacity="0.9"/>
+                `;
+            }
+
+            // 5. 角（ツノ）レイヤー（hornsの数だけ鋭い黄金・白銀の角を生やす）
+            let hornsSvg = '';
+            const count = Math.min(horns, hornCoords.length);
+            for (let i = 0; i < count; i++) {
+                const h = hornCoords[i];
+                const tipX = h.x + h.dx;
+                const tipY = h.y + h.dy;
+                const perpX = -h.dy * 0.24;
+                const perpY = h.dx * 0.24;
+                const hornFill = i % 2 === 0 ? '#fde047' : '#ffffff';
+                hornsSvg += `
+                    <polygon points="${h.x - perpX},${h.y - perpY} ${tipX},${tipY} ${h.x + perpX},${h.y + perpY}" fill="${hornFill}" stroke="${stroke}" stroke-width="1.5" stroke-linejoin="round"/>
+                `;
+            }
+
+            return `
+                <svg class="w-24 h-24 sm:w-28 sm:h-28 overflow-visible" viewBox="0 0 100 100" style="transform: scale(${scale});">
+                    <defs>
+                        <linearGradient id="grad_body_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="${s1}"/>
+                            <stop offset="100%" stop-color="${s2}"/>
+                        </linearGradient>
+                        <linearGradient id="grad_wing_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#f43f5e"/>
+                            <stop offset="50%" stop-color="#f59e0b"/>
+                            <stop offset="100%" stop-color="#facc15"/>
+                        </linearGradient>
+                        <linearGradient id="grad_rain_${uid}" x1="0%" y1="0%" x2="100%" y2="100%">
+                            <stop offset="0%" stop-color="#f43f5e"/>
+                            <stop offset="25%" stop-color="#facc15"/>
+                            <stop offset="50%" stop-color="#10b981"/>
+                            <stop offset="75%" stop-color="#38bdf8"/>
+                            <stop offset="100%" stop-color="#a855f7"/>
+                        </linearGradient>
+                    </defs>
+                    ${auraSvg}
+                    ${wingSvg}
+                    ${bodySvg}
+                    ${patternSvg}
+                    ${hornsSvg}
+                </svg>
+            `;
+        }
+
+        // --- アルバム（カードずかん）機能 ---
+
+        function renderAlbumFilters() {
+            const filterBar = document.getElementById('album-filter-bar');
+            if (!filterBar) return;
+
+            const dexCap = getDexCap();
+            const availableCards = POKEMON_CARDS.slice(0, dexCap);
+
+            const unlockedRarities = RARITY_ORDER.filter(r => availableCards.some(c => c.rarity === r));
+            const filters = ['ALL', ...unlockedRarities];
+
+            if (!filters.includes(currentAlbumFilter)) {
+                currentAlbumFilter = 'ALL';
+            }
+
+            filterBar.innerHTML = '';
+
+            filters.forEach(rarity => {
+                const btn = document.createElement('button');
+                
+                let count = 0;
+                let totalInRarity = 0;
+
+                if (rarity === 'ALL') {
+                    count = availableCards.filter(c => gameState.ownedCards.includes(c.id)).length;
+                    totalInRarity = dexCap;
+                } else {
+                    count = availableCards.filter(c => c.rarity === rarity && gameState.ownedCards.includes(c.id)).length;
+                    totalInRarity = availableCards.filter(c => c.rarity === rarity).length;
+                }
+
+                const isActive = currentAlbumFilter === rarity;
+
+                btn.className = `px-3 py-1 rounded-full text-xs font-black whitespace-nowrap transition-all ${
+                    isActive 
+                        ? 'bg-amber-400 text-slate-900 border-2 border-white shadow' 
+                        : 'bg-slate-800 text-slate-300 hover:bg-slate-700 border border-indigo-500/30'
+                }`;
+                btn.innerText = `${rarity} (${count}/${totalInRarity})`;
+                btn.onclick = () => {
+                    currentAlbumFilter = rarity;
+                    renderAlbumFilters();
+                    renderAlbumGrid();
+                };
+                filterBar.appendChild(btn);
+            });
+        }
+
+        function showAlbum() {
+            stopBGM();
+            hideAllScreens();
+            document.getElementById('album-screen').classList.remove('hidden');
+            renderAlbumFilters();
+            renderAlbumGrid();
+        }
+
+        function renderAlbumGrid() {
+            const grid = document.getElementById('album-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+
+            const dexCap = getDexCap();
+            const availableCards = POKEMON_CARDS.slice(0, dexCap);
+
+            let filteredCards = availableCards;
+            if (currentAlbumFilter !== 'ALL') {
+                filteredCards = availableCards.filter(c => c.rarity === currentAlbumFilter);
+            }
+
+            filteredCards.forEach(card => {
+                const isOwned = gameState.ownedCards.includes(card.id);
+                const wrapper = document.createElement('div');
+                wrapper.className = "flex justify-center items-center cursor-pointer transform hover:scale-105 transition-transform duration-200";
+
+                if (isOwned) {
+                    wrapper.innerHTML = createCardHtml(card);
+                    wrapper.onclick = () => showCardModal(card);
+                } else {
+                    wrapper.innerHTML = `
+                        <div class="w-full h-44 sm:h-52 rounded-2xl bg-slate-900/80 border-2 border-slate-700 flex flex-col items-center justify-center text-slate-600 p-2 text-center shadow-inner relative overflow-hidden">
+                            <i data-lucide="lock" class="w-8 h-8 mb-2 text-slate-600"></i>
+                            <span class="text-xs font-bold text-slate-500">???</span>
+                            <span class="text-[10px] text-slate-600 mt-1 uppercase font-bold">${card.rarity}</span>
+                        </div>
+                    `;
+                }
+                grid.appendChild(wrapper);
+            });
+
+            if (window.lucide) lucide.createIcons();
+        }
+
+        function showCardModal(card) {
+            const container = document.getElementById('modal-card-container');
+            if (!container) return;
+            container.innerHTML = createCardHtml(card, true);
+
+            const newIndex = gameState.newCards.indexOf(card.id);
+            if (newIndex !== -1) {
+                gameState.newCards.splice(newIndex, 1);
+                saveData();
+                renderAlbumGrid();
+            }
+
+            document.getElementById('card-modal').classList.remove('hidden');
+        }
+
+        function closeCardModal() {
+            document.getElementById('card-modal').classList.add('hidden');
+        }
+
+        // --- お祝い演出（紙吹雪 & 連発花火） ---
+        let celebrationAnimId = null;
+
+        function launchCelebration(isComplete = false, isAllClear = false) {
+            const canvas = document.getElementById('celebration-canvas');
+            if (!canvas) return;
+            canvas.classList.remove('hidden');
+            const ctx = canvas.getContext('2d');
+            
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            const particles = [];
+            const fireworks = [];
+
+            const particleCount = isComplete ? 200 : (isAllClear ? 150 : 80);
+            const colors = ['#f43f5e', '#ec4899', '#d946ef', '#a855f7', '#6366f1', '#3b82f6', '#06b6d4', '#10b981', '#84cc16', '#eab308', '#f97316'];
+
+            for (let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    size: Math.random() * 8 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    vx: Math.random() * 2 - 1,
+                    vy: Math.random() * 3 + 2,
+                    rot: Math.random() * 360,
+                    vRot: Math.random() * 10 - 5
+                });
+            }
+
+            function createFirework() {
+                const fx = Math.random() * (canvas.width * 0.8) + canvas.width * 0.1;
+                const fy = Math.random() * (canvas.height * 0.5) + canvas.height * 0.1;
+                const count = Math.floor(Math.random() * 30) + 40;
+                const fwColor = colors[Math.floor(Math.random() * colors.length)];
+
+                for (let i = 0; i < count; i++) {
+                    const angle = (Math.PI * 2 / count) * i + Math.random() * 0.2;
+                    const speed = Math.random() * 5 + 3;
+                    fireworks.push({
+                        x: fx,
+                        y: fy,
+                        vx: Math.cos(angle) * speed,
+                        vy: Math.sin(angle) * speed,
+                        size: Math.random() * 3 + 2,
+                        color: fwColor,
+                        alpha: 1,
+                        decay: Math.random() * 0.02 + 0.015
+                    });
+                }
+            }
+
+            let fwTimer = 0;
+            const fwFrequency = isComplete ? 12 : 25;
+
+            if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+
+            function loop() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+                fwTimer++;
+                if (fwTimer % fwFrequency === 0) {
+                    createFirework();
+                }
+
+                for (let i = fireworks.length - 1; i >= 0; i--) {
+                    const fw = fireworks[i];
+                    fw.x += fw.vx;
+                    fw.y += fw.vy;
+                    fw.vy += 0.05;
+                    fw.alpha -= fw.decay;
+
+                    if (fw.alpha <= 0) {
+                        fireworks.splice(i, 1);
+                        continue;
+                    }
+
+                    ctx.save();
+                    ctx.globalAlpha = fw.alpha;
+                    ctx.fillStyle = fw.color;
+                    ctx.beginPath();
+                    ctx.arc(fw.x, fw.y, fw.size, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.restore();
+                }
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+                    p.rot += p.vRot;
+
+                    if (p.y > canvas.height) {
+                        p.y = -10;
+                        p.x = Math.random() * canvas.width;
+                    }
+
+                    ctx.save();
+                    ctx.translate(p.x, p.y);
+                    ctx.rotate((p.rot * Math.PI) / 180);
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size);
+                    ctx.restore();
+                });
+
+                celebrationAnimId = requestAnimationFrame(loop);
+            }
+
+            loop();
+
+            setTimeout(() => {
+                if (celebrationAnimId) cancelAnimationFrame(celebrationAnimId);
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                canvas.classList.add('hidden');
+            }, isComplete ? 8000 : 5000);
+        }
+
+        // ウィンドウロード時初期化
+        window.onload = function() {
+            loadSaveData();
+            showStageSelect();
+        };
+    </script>
+</body>
+</html>
